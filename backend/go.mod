@@ -1,4 +1,4 @@
-module github.com/Grajal/SW2-YugiCollectionManager
+module github.com/Grajal/SW2-YugiCollectionManager/backend
 
 go 1.24.0
 
