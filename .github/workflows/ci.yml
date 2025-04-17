@@ -39,6 +39,7 @@ jobs:
       with:
        version: latest
        args: --timeout=5m
+       working-directory: backend
 
     - name: Run go fmt
       run: go fmt ./...
