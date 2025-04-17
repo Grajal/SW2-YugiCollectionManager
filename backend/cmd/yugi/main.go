@@ -3,7 +3,8 @@ package main
 import (
 	"net/http"
 	"os"
-	"yugi/internal/handlers"
+
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/internal/handlers"
 
 	echo "github.com/labstack/echo/v4"
 )
