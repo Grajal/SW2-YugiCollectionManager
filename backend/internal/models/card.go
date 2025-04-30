@@ -7,8 +7,6 @@ type Card struct {
 	FrameType string // Ex: "xyx", "spell", "trap"
 	Type      string
 
-	MonsterCard *MonsterCard `gorm:"foreignKey:CardID"`
-
-	MagicCard *MagicCard `gorm:"foreignKey:CardID"`
-	SpellCard *SpellCard `gorm:"foreignKey:CardID"`
+	MonsterCard *MonsterCard   `gorm:"foreignKey:CardID"`
+	SpellCard   *SpellTrapCard `gorm:"foreignKey:CardID"`
 }
