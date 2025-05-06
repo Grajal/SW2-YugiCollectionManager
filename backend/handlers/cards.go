@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/labstack/echo/v4"
+	"github.com/gin-gonic/gin"
 )
 
 // Card represents a single card object from the API response
@@ -64,16 +64,18 @@ func GetCardByName(cardName string) (*Card, error) {
 	return &apiResp.Data[0], nil
 }
 
-func GetNewCard(c echo.Context) error {
-	cardName := c.QueryParam("name")
+func GetNewCard(c *gin.Context) {
+	cardName := c.Query("name")
 	if cardName == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "missing 'name' query parameter"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing 'name' query parameter"})
+		return
 	}
 
 	card, err := GetCardByName(cardName)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
-	return c.JSON(http.StatusOK, card)
+	c.JSON(http.StatusOK, card)
 }

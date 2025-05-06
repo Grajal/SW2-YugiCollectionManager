@@ -1,15 +1,11 @@
 package main
 
 import (
-	"net/http"
 	"os"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/handlers"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/router"
-
-	echo "github.com/labstack/echo/v4"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/routes"
 )
 
 var port = os.Getenv("PORT")
@@ -25,12 +21,7 @@ func main() {
 		panic("Failed to migrate database: " + err.Error())
 	}
 
-	e := router.New()
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	})
+	router := routes.SetupRouter()
 
-	e.GET("/health", handlers.HealthHandler)
-
-	e.Logger.Fatal(e.Start(":" + port))
+	router.Run(":" + port)
 }
