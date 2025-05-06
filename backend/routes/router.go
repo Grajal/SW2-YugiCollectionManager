@@ -29,8 +29,8 @@ func SetupRouter() *gin.Engine {
 		users := api.Group("/users")
 		{
 			users.POST("/", handlers.CreateUser)
-			users.GET("/{username}", handlers.GetUserByName)
-			users.DELETE("/{username}", handlers.DeleteUser)
+			users.GET("/:username", handlers.GetUserByName)
+			users.DELETE("/:username", handlers.DeleteUser)
 		}
 
 		cards := api.Group("/cards")

@@ -32,7 +32,22 @@ func CreateUser(c *gin.Context) {
 }
 
 func GetUserByName(c *gin.Context) {
+	username := c.Param("username")
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing 'username' query parameter"})
+		return
+	}
 
+	var user models.User
+	if err := database.DB.Where("username = ?", username).First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+
+	}
+
+	// Remove the password from the user object before sending it in the response
+	user.Password = ""
+	c.JSON(http.StatusOK, gin.H{"user": user})
 }
 
 func DeleteUser(c *gin.Context) {
