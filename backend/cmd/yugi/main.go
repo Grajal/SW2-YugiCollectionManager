@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/internal/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/internal/handlers"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/internal/models"
 
 	echo "github.com/labstack/echo/v4"
 )
@@ -15,6 +17,10 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+
+	database.DBConnect()
+
+	database.DB.AutoMigrate(models.User{}, models.Card{}, models.SpellTrapCard{}, models.MonsterCard{}, models.Collection{}, models.Deck{})
 
 	e := echo.New()
 	e.GET("/", func(c echo.Context) error {
