@@ -20,7 +20,9 @@ func main() {
 
 	database.DBConnect()
 
-	database.DB.AutoMigrate(models.User{}, models.Card{}, models.SpellTrapCard{}, models.MonsterCard{}, models.Collection{}, models.Deck{})
+	if err := database.DB.AutoMigrate(models.User{}, models.Card{}, models.SpellTrapCard{}, models.MonsterCard{}, models.Collection{}, models.Deck{}); err != nil {
+		panic("Failed to migrate database: " + err.Error())
+	}
 
 	e := echo.New()
 	e.GET("/", func(c echo.Context) error {
