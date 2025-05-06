@@ -8,4 +8,4 @@ bin
 vendor
 *.test
 *.tmp
-.env
+

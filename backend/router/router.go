@@ -3,7 +3,7 @@ package router
 import (
 	"net/http"
 
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/internal/handlers"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/handlers"
 
 	"github.com/labstack/echo/v4"
 )

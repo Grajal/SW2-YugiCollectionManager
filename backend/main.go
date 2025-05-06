@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/internal/database"
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/internal/handlers"
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/internal/models"
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/internal/router"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/handlers"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/router"
 
 	echo "github.com/labstack/echo/v4"
 )
