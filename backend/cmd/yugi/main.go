@@ -1,10 +1,15 @@
 package main
 
 import (
-	"fmt"
+	"net/http"
 	"os"
 
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/internal/database"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/internal/handlers"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/internal/models"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/internal/router"
+
+	echo "github.com/labstack/echo/v4"
 )
 
 var port = os.Getenv("PORT")
@@ -14,8 +19,18 @@ func main() {
 		port = "8080"
 	}
 
+	database.DBConnect()
+
+	if err := database.DB.AutoMigrate(models.User{}, models.Card{}, models.SpellTrapCard{}, models.MonsterCard{}, models.Collection{}, models.Deck{}); err != nil {
+		panic("Failed to migrate database: " + err.Error())
+	}
+
 	e := router.New()
-	fmt.Println("Starting server on port 8080...")
+	e.GET("/", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hello, World!")
+	})
+
+	e.GET("/health", handlers.HealthHandler)
 
 	e.Logger.Fatal(e.Start(":" + port))
 }
