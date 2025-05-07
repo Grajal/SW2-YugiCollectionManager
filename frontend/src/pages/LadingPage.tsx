@@ -1,6 +1,5 @@
-import { Button } from "@/components/ui/button"
-import { SignedIn, SignedOut, SignIn, SignInButton, useSignIn } from "@clerk/clerk-react"
-import { WalletCardsIcon as Cards, Layers, Sparkles, Shuffle, Search, Users } from "lucide-react"
+import { SignInButton } from "@clerk/clerk-react"
+import { WalletCardsIcon as Cards } from "lucide-react"
 
 export default function LandingPage() {
   return (
@@ -13,7 +12,7 @@ export default function LandingPage() {
           </div>
           <div className="flex flex-1 items-center justify-end space-x-4">
             <nav className="flex items-center space-x-1">
-              <SignInButton 
+              <SignInButton
                 mode="modal"
               />
             </nav>
