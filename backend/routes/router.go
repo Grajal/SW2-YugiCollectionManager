@@ -1,3 +1,4 @@
+// Package routes contains API route configuration
 package routes
 
 import (
@@ -5,22 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// New initializes the Echo router and returns it
-// func New() *echo.Echo {
-// 	e := echo.New()
-
-// 	// Example route
-// 	e.GET("/", func(c echo.Context) error {
-// 		return c.String(http.StatusOK, "Hello from Echo!")
-// 	})
-
-// 	// You can group routes or import handler packages here
-// 	e.GET("/health", handlers.HealthHandler)
-// 	e.GET("/getNewCard", handlers.GetNewCard)
-
-// 	return e
-// }
-
+// SetupRouter configures and returns the main application router
+// Define todas las rutas de la API agrupadas por funcionalidad:
+// - /api/users: Gestión de usuarios (crear, obtener, eliminar)
+// - /api/cards: Gestión de cartas (obtener nueva carta)
+// - /api/auth: Autenticación (login normal y con Clerk)
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
@@ -35,11 +25,12 @@ func SetupRouter() *gin.Engine {
 
 		cards := api.Group("/cards")
 		{
-			cards.GET("/getNewCard", handlers.GetNewCard)
+			cards.GET("/getNewCard", handlers.GetNewCard) // Get new card
 		}
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", handlers.Login)
+			// auth.POST("/login/clerk", handlers.LoginWithClerk)
 		}
 	}
 

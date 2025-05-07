@@ -1,3 +1,4 @@
+// Package handlers contains HTTP handlers for API routes
 package handlers
 
 import (
@@ -9,6 +10,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// CreateUser handles user creation
+// POST /api/users/
+// Request body:
+// - username: unique username
+// - email: unique email
+// - password: will be hashed before storage
 func CreateUser(c *gin.Context) {
 	var user models.User
 
@@ -31,6 +38,10 @@ func CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"user": user})
 }
 
+// GetUserByName retrieves user information by username
+// GET /api/users/:username
+// URL params:
+// - username: username to search for
 func GetUserByName(c *gin.Context) {
 	username := c.Param("username")
 	if username == "" {
@@ -42,7 +53,6 @@ func GetUserByName(c *gin.Context) {
 	if err := database.DB.Where("username = ?", username).First(&user).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
-
 	}
 
 	// Remove the password from the user object before sending it in the response
@@ -50,6 +60,10 @@ func GetUserByName(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": user})
 }
 
+// DeleteUser removes a user by username
+// DELETE /api/users/:username
+// URL params:
+// - username: username to delete
 func DeleteUser(c *gin.Context) {
 	username := c.Param("username")
 	if username == "" {

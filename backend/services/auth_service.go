@@ -1,13 +1,11 @@
 package services
 
 import (
-	"context"
 	"errors"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
 	"golang.org/x/crypto/bcrypt"
-	"google.golang.org/api/idtoken"
 )
 
 func AuthenticateUser(username, password string) (models.User, error) {
@@ -23,30 +21,40 @@ func AuthenticateUser(username, password string) (models.User, error) {
 	return user, nil
 }
 
-func AuthenticateWithGoogle(idToken string, clientID string) (models.User, error) {
-	var user models.User
+// func AuthenticateWithClerk(sessionToken string) (models.User, error) {
+// 	var user models.User
 
-	payload, err := idtoken.Validate(context.Background(), idToken, clientID)
-	if err != nil {
-		return user, errors.New("invalid Google ID token")
-	}
+// 	client, err := clerk.NewClient(os.Getenv("CLERK_SECRET_KEY"))
+// 	if err != nil {
+// 		return user, errors.New("failed to initialize Clerk client")
+// 	}
 
-	email := payload.Claims["email"].(string)
-	username := payload.Claims["name"].(string)
+// 	session, err := client.Sessions().VerifyToken(sessionToken)
+// 	if err != nil {
+// 		return user, errors.New("invalid session token")
+// 	}
 
-	err = database.DB.Where("email = ?", email).First(&user).Error
-	if err != nil {
-		return user, nil
-	}
+// 	clerkUser, err := client.Users().Read(session.UserID)
+// 	if err != nil {
+// 		return user, errors.New("failed to get user from Clerk")
+// 	}
 
-	newUser := models.User{
-		Email:    email,
-		Username: username,
-	}
+// 	email := clerkUser.EmailAddresses[0].EmailAddress
+// 	username := clerkUser.Username
 
-	if err := database.DB.Create(&newUser).Error; err != nil {
-		return user, err
-	}
+// 	err = database.DB.Where("email = ?", email).First(&user).Error
+// 	if err != nil {
+// 		newUser := models.User{
+// 			Email:    email,
+// 			Username: username,
+// 		}
 
-	return newUser, nil
-}
+// 		if err := database.DB.Create(&newUser).Error; err != nil {
+// 			return user, err
+// 		}
+
+// 		return newUser, nil
+// 	}
+
+// 	return user, nil
+// }

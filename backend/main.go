@@ -1,3 +1,4 @@
+// Package main is the application entry point
 package main
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/routes"
 )
 
+// port is the server port, defaults to 8080 if not set in environment
 var port = os.Getenv("PORT")
 
 func main() {
