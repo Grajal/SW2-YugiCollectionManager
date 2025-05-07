@@ -37,6 +37,10 @@ func SetupRouter() *gin.Engine {
 		{
 			cards.GET("/getNewCard", handlers.GetNewCard)
 		}
+		auth := api.Group("/auth")
+		{
+			auth.POST("/login", handlers.Login)
+		}
 	}
 
 	return r
