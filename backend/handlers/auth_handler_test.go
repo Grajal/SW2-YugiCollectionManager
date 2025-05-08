@@ -23,7 +23,9 @@ func setupTestRouter() *gin.Engine {
 	}
 
 	database.DB = db
-	database.DB.AutoMigrate(&models.User{})
+	if err := database.DB.AutoMigrate(&models.User{}); err != nil {
+		panic("failed to migrate database")
+	}
 
 	hashed, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 	database.DB.Create(&models.User{
