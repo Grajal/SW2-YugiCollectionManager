@@ -25,5 +25,7 @@ func main() {
 
 	router := routes.SetupRouter()
 
-	router.Run(":" + port)
+	if err := router.Run(":" + port); err != nil {
+		panic("Failed to start server: " + err.Error())
+	}
 }

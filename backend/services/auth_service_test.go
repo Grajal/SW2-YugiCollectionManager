@@ -16,7 +16,9 @@ func setupTestDB() {
 		panic("failed to connect to database")
 	}
 	database.DB = db
-	database.DB.AutoMigrate(&models.User{})
+	if err := database.DB.AutoMigrate(&models.User{}); err != nil {
+		panic("failed to migrate database")
+	}
 }
 
 func seddTestUsers() {
