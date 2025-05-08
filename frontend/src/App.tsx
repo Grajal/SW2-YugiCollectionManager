@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import LandingPage from '@/pages/LadingPage';
+import LandingPage from '@/pages/LangingPage'
+import { Toaster } from '@/components/ui/toaster'
 
 export default function App() {
   return (
@@ -7,6 +8,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
       </Routes>
+      <Toaster />
     </BrowserRouter>
-  );
+  )
 }
