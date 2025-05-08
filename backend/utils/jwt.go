@@ -10,7 +10,7 @@ import (
 var jwtSecret = []byte("JWT_SECRET")
 
 type JWTClaims struct {
-	UserID uint `json:·"user_id"`
+	UserID uint `json:"user_id"`
 	jwt.RegisteredClaims
 }
 

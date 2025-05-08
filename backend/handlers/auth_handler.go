@@ -6,6 +6,7 @@ import (
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/services"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/utils"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -35,8 +36,13 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	user.Password = ""
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful", "user": user})
+	token, err := utils.GenerateToken(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
 func Register(c *gin.Context) {
@@ -71,4 +77,15 @@ func Register(c *gin.Context) {
 
 	user.Password = ""
 	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully", "user": user})
+}
+
+func GetCurrentUser(c *gin.Context) {
+	userIDRaw, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
+		return
+	}
+
+	userID := userIDRaw.(uint)
+	c.JSON(http.StatusOK, gin.H{"user_id": userID})
 }
