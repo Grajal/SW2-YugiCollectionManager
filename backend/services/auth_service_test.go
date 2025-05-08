@@ -41,7 +41,6 @@ func TestAuthenticateUser(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
 		{
 			name: "Test valid user",
 			args: args{

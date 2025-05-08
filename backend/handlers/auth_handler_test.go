@@ -40,16 +40,12 @@ func setupTestRouter() *gin.Engine {
 func TestLogin(t *testing.T) {
 	router := setupTestRouter()
 
-	type args struct {
-		c *gin.Context
-	}
 	tests := []struct {
 		name         string
 		payload      string
 		wantStatus   int
 		wantContains string
 	}{
-		// TODO: Add test cases.
 		{
 			name:         "Test valid login",
 			payload:      `{"username": "testuser", "password": "password"}`,

@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Login handles user login requests
 func Login(c *gin.Context) {
 	var input struct {
 		Username string `json:"username" binding:"required"`

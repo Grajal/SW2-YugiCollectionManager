@@ -8,6 +8,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// AuthenticateUser checks if the provided username and password are valid
+// and returns the corresponding user if they are.
 func AuthenticateUser(username, password string) (models.User, error) {
 	var user models.User
 	if err := database.DB.Where("username = ?", username).First(&user).Error; err != nil {
