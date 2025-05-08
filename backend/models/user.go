@@ -5,7 +5,7 @@ package models
 // Contains basic user information and its relationships with collections and decks
 type User struct {
 	ID       uint   `gorm:"primaryKey"`
-	ClerkID  string `gorm:"unique;not null"`
+	ClerkID  string `gorm:"uniqueIndex"`
 	Username string `gorm:"unique;not null"`
 	Email    string `gorm:"unique;not null"`
 	Password string // Hashed password
