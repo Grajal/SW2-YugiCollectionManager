@@ -1,3 +1,4 @@
+// Package database provides PostgreSQL database connection and management functionality
 package database
 
 import (
@@ -9,8 +10,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// DB is the global database connection instance
 var DB *gorm.DB
 
+// DBConnect initializes the PostgreSQL database connection
+// Required environment variables:
+// - DB_HOST: database host
+// - DB_USER: database user
+// - DB_PASSWORD: user password
+// - DB_NAME: database name
+// - DB_PORT: database port
+// - DB_SSLMODE: SSL mode
 func DBConnect() {
 	err := godotenv.Load()
 	if err != nil {
