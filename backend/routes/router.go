@@ -4,6 +4,7 @@ package routes
 import (
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/handlers"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/middleware"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,6 +15,8 @@ import (
 // - /api/auth: Autenticación (login normal y con Clerk)
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
+
+	r.Use(cors.Default())
 
 	api := r.Group("/api")
 	{

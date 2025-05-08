@@ -17,7 +17,7 @@ export function LoginForm() {
 
   const onLoginSubmit = async (data: LoginFormValues) => {
     try {
-      const response = await fetch('http:/localhost:8080/api/auth/login', {
+      const response = await fetch('http://localhost:8080/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,9 +48,9 @@ export function LoginForm() {
           <Label htmlFor="email-login">
             Correo Electrónico
           </Label>
-          <Input id="email-login" type="email" {...register("email")} />
+          <Input id="email-login" type="text" {...register("username")} />
         </div>
-        {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
+        {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
         <div className="grid gap-2">
           <Label htmlFor="password-login">
             Contraseña
