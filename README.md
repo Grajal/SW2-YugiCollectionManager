@@ -9,6 +9,8 @@ DB_PASSWORD=your_password
 DB_NAME=dbname
 DB_PORT=5432
 DB_SSLMODE=disable
+JWT_SECRET=your_key
+JWT_EXPIRES_IN=2h
 </pre>
 
 ### 2. Set up the services (API + PostgreSQL):
