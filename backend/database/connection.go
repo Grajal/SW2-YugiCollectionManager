@@ -22,9 +22,14 @@ var DB *gorm.DB
 // - DB_PORT: database port
 // - DB_SSLMODE: SSL mode
 func DBConnect() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file")
+	if _, err := os.Stat(".env"); err != nil {
+		if err := godotenv.Load(); err != nil {
+			log.Fatalf("Error loading .env file")
+		} else {
+			log.Println("Loaded .env file")
+		}
+	} else {
+		log.Println("No .env file found; assuming database is already connected")
 	}
 
 	host := os.Getenv("DB_HOST")
@@ -36,6 +41,7 @@ func DBConnect() {
 
 	dsn := "host=" + host + " user=" + user + " password=" + pw + " dbname=" + dbName + " port=" + port + " sslmode=" + sslmode
 
+	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
