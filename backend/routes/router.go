@@ -3,7 +3,6 @@ package routes
 
 import (
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/handlers"
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,13 +30,6 @@ func SetupRouter() *gin.Engine {
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", handlers.Login)
-			// auth.POST("/login/clerk", handlers.LoginWithClerk)
-		}
-
-		clerk := api.Group("/")
-		clerk.Use(middleware.RequireClerkAuth())
-		{
-			clerk.GET("/me", handlers.Me)
 		}
 	}
 
