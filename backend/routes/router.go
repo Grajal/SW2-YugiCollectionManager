@@ -31,13 +31,13 @@ func SetupRouter() *gin.Engine {
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", handlers.Login)
-			// auth.POST("/login/clerk", handlers.LoginWithClerk)
+			auth.POST("register", handlers.Register)
 		}
 
-		clerk := api.Group("/")
-		clerk.Use(middleware.RequireClerkAuth())
+		auth = api.Group("/auth")
 		{
-			clerk.GET("/me", handlers.Me)
+			auth.Use(middleware.AuthMiddleware())
+			auth.GET("/me", handlers.GetCurrentUser) // Get current user
 		}
 	}
 
