@@ -30,6 +30,7 @@ func SetupRouter() *gin.Engine {
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", handlers.Login)
+			auth.POST("register", handlers.Register)
 		}
 	}
 
