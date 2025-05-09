@@ -15,12 +15,12 @@ var DB *gorm.DB
 
 // DBConnect initializes the PostgreSQL database connection
 // Required environment variables:
-// - DB_HOST: database host
-// - DB_USER: database user
-// - DB_PASSWORD: user password
-// - DB_NAME: database name
-// - DB_PORT: database port
-// - DB_SSLMODE: SSL mode
+// - PGHOST: database host
+// - PGUSER: database user
+// - PGPASSWORD: user password
+// - PGNAME: database name
+// - PGPORT: database port
+// - PGSSLMODE: SSL mode
 func DBConnect() {
 	if _, err := os.Stat(".env"); err == nil {
 		if err := godotenv.Load(); err != nil {
@@ -32,12 +32,12 @@ func DBConnect() {
 		log.Println("No .env file found; assuming database is already connected")
 	}
 
-	host := os.Getenv("DB_HOST")
-	user := os.Getenv("DB_USER")
-	pw := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-	port := os.Getenv("DB_PORT")
-	sslmode := os.Getenv("DB_SSLMODE")
+	host := os.Getenv("PGHOST")
+	user := os.Getenv("PGUSER")
+	pw := os.Getenv("PGPASSWORD")
+	dbName := os.Getenv("PGDATABASE")
+	port := os.Getenv("PGPORT")
+	sslmode := os.Getenv("PGSSLMODE")
 
 	dsn := "host=" + host + " user=" + user + " password=" + pw + " dbname=" + dbName + " port=" + port + " sslmode=" + sslmode
 
