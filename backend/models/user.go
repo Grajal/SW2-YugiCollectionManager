@@ -12,6 +12,6 @@ type User struct {
 	Email    string `gorm:"unique;not null"`
 	Password string // Hashed password
 
-	Collections []Collection `gorm:"foreignKey:UserID"` // User's card collections
-	Decks       []Deck       `gorm:"foreignKey:UserID"` // User's card decks
+	Collection []UserCard `gorm:"foreignKey:UserID"` // User's card collection
+	Decks      []Deck     `gorm:"foreignKey:UserID"` // User's card decks
 }

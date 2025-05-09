@@ -9,10 +9,6 @@ import (
 )
 
 // SetupRouter configures and returns the main application router
-// Define todas las rutas de la API agrupadas por funcionalidad:
-// - /api/users: Gestión de usuarios (crear, obtener, eliminar)
-// - /api/cards: Gestión de cartas (obtener nueva carta)
-// - /api/auth: Autenticación (login normal y con Clerk)
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
@@ -41,6 +37,14 @@ func SetupRouter() *gin.Engine {
 		{
 			auth.Use(middleware.AuthMiddleware())
 			auth.GET("/me", handlers.GetCurrentUser) // Get current user
+		}
+
+		collections := api.Group("/collection")
+		collections.Use(middleware.AuthMiddleware())
+		{
+			collections.GET("/", handlers.GetColletion) // Get collection
+			collections.POST("/", handlers.AddCardToCollection)
+			collections.DELETE("/:card_id", handlers.DeleteCardFromCollection)
 		}
 	}
 
