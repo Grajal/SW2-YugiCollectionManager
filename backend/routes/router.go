@@ -42,6 +42,12 @@ func SetupRouter() *gin.Engine {
 			auth.Use(middleware.AuthMiddleware())
 			auth.GET("/me", handlers.GetCurrentUser) // Get current user
 		}
+
+		collections := api.Group("/collection")
+		collections.Use(middleware.AuthMiddleware())
+		{
+			collections.GET("/", handlers.GetColletion) // Get collection
+		}
 	}
 
 	return r
