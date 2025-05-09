@@ -22,7 +22,7 @@ var DB *gorm.DB
 // - DB_PORT: database port
 // - DB_SSLMODE: SSL mode
 func DBConnect() {
-	if _, err := os.Stat(".env"); err != nil {
+	if _, err := os.Stat(".env"); err == nil {
 		if err := godotenv.Load(); err != nil {
 			log.Fatalf("Error loading .env file")
 		} else {
