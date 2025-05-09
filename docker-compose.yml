@@ -5,6 +5,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: yugi_frontend
     ports:
       - "80:80"
     depends_on:
@@ -12,14 +13,42 @@ services:
     networks:
       - yuginet
 
+  db:
+    image: postgres:15
+    container_name: yugi_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+      POSTGRES_DB: ${PGDATABASE}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: yuig_backend
+    depends_on:
+      - db
+    environment:
+      - PGHOST=db
+      - PGUSER=${PGUSER}
+      - PGPASSWORD=${PGPASSWORD}
+      - PGDATABASE=${PGDATABASE}
+      - PGPORT=5432
+      - PGSSLMODE=disable
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION}
     ports:
       - "8080:8080"
-    networks:
-      - yuginet
+    command: ["./yugi"]
+
+volumes:
+  postgres_data:
+    driver: local
 
 networks:
   yuginet:
