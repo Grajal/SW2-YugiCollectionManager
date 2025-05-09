@@ -40,3 +40,7 @@ func AddCardToCollection(userID uint, cardID uint, quantity int) error {
 
 	return err
 }
+
+func DeleteCardFromCollection(userID, cardID uint) error {
+	return database.DB.Where("user_id = ? AND card_id = ?", userID, cardID).Delete(&models.UserCard{}).Error
+}

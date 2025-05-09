@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/services"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/utils"
@@ -49,4 +50,26 @@ func AddCardToCollection(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Card added to collection successfully"})
+}
+
+func DeleteCardFromCollection(c *gin.Context) {
+	userID, exists := utils.GetUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	cardIDParam := c.Param("card_id")
+	cardID, err := strconv.ParseUint(cardIDParam, 10, 64)
+	if err != nil || cardID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid card ID"})
+		return
+	}
+
+	if err := services.DeleteCardFromCollection(userID, uint(cardID)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete card from collection"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Card deleted from collection successfully"})
 }

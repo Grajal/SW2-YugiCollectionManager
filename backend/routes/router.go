@@ -42,8 +42,9 @@ func SetupRouter() *gin.Engine {
 		collections := api.Group("/collection")
 		collections.Use(middleware.AuthMiddleware())
 		{
-			collections.GET("/", handlers.GetColletion)         // Get collection
-			collections.POST("/", handlers.AddCardToCollection) // Create collection
+			collections.GET("/", handlers.GetColletion) // Get collection
+			collections.POST("/", handlers.AddCardToCollection)
+			collections.DELETE("/:card_id", handlers.DeleteCardFromCollection)
 		}
 	}
 
