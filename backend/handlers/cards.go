@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -71,9 +73,39 @@ func GetNewCard(c *gin.Context) {
 		return
 	}
 
-	card, err := GetCardByName(cardName)
+	cardData, err := GetCardByName(cardName)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Check if the card already exists
+	exists, err := database.CheckIfCardExists(uint(cardData.ID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database check failed", "details": err.Error()})
+		return
+	}
+
+	if exists {
+		// Card already exists
+		c.JSON(http.StatusConflict, gin.H{"error": "Card already exists"})
+		return
+	}
+
+	// Check if it's monster or spell card
+
+	// Convert API card to your DB model
+	card := models.Card{
+		ID:        uint(cardData.ID),
+		Name:      cardData.Name,
+		Type:      cardData.Type,
+		FrameType: cardData.FrameType,
+		Desc:      cardData.Desc,
+	}
+
+	// Save to database
+	if err := database.DB.Create(&card).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to insert card into database", "details": err.Error()})
 		return
 	}
 
