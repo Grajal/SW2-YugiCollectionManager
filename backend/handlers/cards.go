@@ -57,6 +57,7 @@ func GetCardByName(cardName string) (*Card, error) {
 		return nil, fmt.Errorf("API returned status code %d", resp.StatusCode)
 	}
 
+
 	// Read and parse the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

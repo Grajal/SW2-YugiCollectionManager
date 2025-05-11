@@ -1,28 +1,18 @@
+// Package routes contains API route configuration
 package routes
 
 import (
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/handlers"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/middleware"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-// New initializes the Echo router and returns it
-// func New() *echo.Echo {
-// 	e := echo.New()
-
-// 	// Example route
-// 	e.GET("/", func(c echo.Context) error {
-// 		return c.String(http.StatusOK, "Hello from Echo!")
-// 	})
-
-// 	// You can group routes or import handler packages here
-// 	e.GET("/health", handlers.HealthHandler)
-// 	e.GET("/getNewCard", handlers.GetNewCard)
-
-// 	return e
-// }
-
+// SetupRouter configures and returns the main application router
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
+
+	r.Use(cors.Default())
 
 	api := r.Group("/api")
 	{
@@ -35,11 +25,26 @@ func SetupRouter() *gin.Engine {
 
 		cards := api.Group("/cards")
 		{
-			cards.GET("/getNewCard", handlers.GetNewCard)
+			cards.GET("/getNewCard", handlers.GetNewCard) // Get new card
 		}
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", handlers.Login)
+			auth.POST("register", handlers.Register)
+		}
+
+		auth = api.Group("/auth")
+		{
+			auth.Use(middleware.AuthMiddleware())
+			auth.GET("/me", handlers.GetCurrentUser) // Get current user
+		}
+
+		collections := api.Group("/collection")
+		collections.Use(middleware.AuthMiddleware())
+		{
+			collections.GET("/", handlers.GetColletion) // Get collection
+			collections.POST("/", handlers.AddCardToCollection)
+			collections.DELETE("/:card_id", handlers.DeleteCardFromCollection)
 		}
 	}
 

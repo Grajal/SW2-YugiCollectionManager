@@ -1,5 +1,14 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import LandingPage from '@/pages/LangingPage'
+import { Toaster } from '@/components/ui/toaster'
+
 export default function App() {
   return (
-    <h1 className='flex justify-center items-center min-h-screen font-bold'>Bienvenido a YuGiOh Collection Manager! 🃏</h1>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+      </Routes>
+      <Toaster />
+    </BrowserRouter>
   )
 }
