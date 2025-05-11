@@ -10,6 +10,7 @@ import (
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/services"
 	"github.com/gin-gonic/gin"
 )
 
@@ -57,7 +58,6 @@ func GetCardByName(cardName string) (*Card, error) {
 		return nil, fmt.Errorf("API returned status code %d", resp.StatusCode)
 	}
 
-
 	// Read and parse the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -83,7 +83,7 @@ func GetCardByName(cardName string) (*Card, error) {
 func CreateCard(card *Card) (*models.Card, error) {
 
 	// Check if card already exists in the database
-	exists, err := database.CheckIfCardExists(uint(card.ID))
+	exists, err := services.CheckIfCardExists(uint(card.ID))
 
 	if err != nil {
 		return nil, fmt.Errorf("database check failed: %w", err)

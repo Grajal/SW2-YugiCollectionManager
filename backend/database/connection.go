@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -57,14 +56,4 @@ func DBConnect() {
 	}
 
 	log.Fatalf("Failed to connect to database after %d attempts: %v", maxRetries, err)
-}
-
-// CheckIfCardExists checks if a card with a given ID exists in the database
-func CheckIfCardExists(cardID uint) (bool, error) {
-	var card models.Card
-	result := DB.First(&card, "id = ?", cardID)
-	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
-		return false, result.Error
-	}
-	return result.RowsAffected > 0, nil
 }
