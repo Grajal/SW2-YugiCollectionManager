@@ -41,7 +41,7 @@ services:
       - PGPORT=5432
       - PGSSLMODE=disable
       - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRATION=${JWT_EXPIRATION}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
     ports:
       - "8080:8080"
     command: ["./yugi"]
