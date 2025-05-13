@@ -2,6 +2,9 @@
 package routes
 
 import (
+	"strings"
+	"time"
+
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/handlers"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/middleware"
 	"github.com/gin-contrib/cors"
@@ -12,7 +15,19 @@ import (
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
-	r.Use(cors.Default())
+	allowedOrigins := "http://localhost:8080,https://sw2-yugicollectionmanager-production.up.railway.app"
+
+	origins := strings.Split(allowedOrigins, ",")
+
+	config := cors.Config{
+		AllowOrigins:     origins,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}
+	r.Use(cors.New(config))
 
 	api := r.Group("/api")
 	{
