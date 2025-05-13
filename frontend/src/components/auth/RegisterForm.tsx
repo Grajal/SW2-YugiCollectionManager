@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { registerSchema, RegisterFormValues } from '@/lib/schemas/authSchemas'
 import { toast } from "sonner"
+import { useState } from 'react'
 
 export function RegisterForm() {
+  const [formError, setFormError] = useState<string>('')
   const {
     register,
     handleSubmit,
@@ -33,9 +35,14 @@ export function RegisterForm() {
       })
       const responseData = await response.json()
       if (!response.ok) {
-        const errorMessage = responseData.message || 'Error en el registro. Por favor, inténtalo de nuevo.'
-        throw new Error(errorMessage)
+        if (response.status === 409) {
+          throw new Error('Ya hay un usuario registrado con esos datos')
+        } else {
+          throw new Error('Error en el registro. Por favor, inténtalo de nuevo.')
+        }
       }
+
+      setFormError('')
       console.log('Registro exitoso:', responseData)
       toast.success("Registro Exitoso", {
         description: "Tu cuenta ha sido creada correctamente."
@@ -43,9 +50,11 @@ export function RegisterForm() {
       // TODO: Manejar registro exitoso (e.g., auto-login, redirigir, close modal)
     } catch (error) {
       console.error('Error en el registro:', error)
-      toast.error("Error de Registro", {
-        description: 'Hubo un error al registrar tu cuenta. Intentalo de nuevo más tarde',
-      })
+      if (error instanceof Error) {
+        setFormError(error.message)
+      } else {
+        setFormError('Hubo un error al registrar tu cuenta. Intentalo de nuevo más tarde')
+      }
     }
   }
 
@@ -56,30 +65,31 @@ export function RegisterForm() {
           <Label htmlFor="email-register">
             Correo Electrónico
           </Label>
-          <Input id="email-register" type="email" {...register("email")} />
+          <Input id="email-register" type="email" {...register("email")} onFocus={() => setFormError('')} />
         </div>
         {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
         <div className="grid gap-2">
           <Label htmlFor="username-register">
             Nombre de usuario
           </Label>
-          <Input id="username-register" type="text" {...register("username")} />
+          <Input id="username-register" type="text" {...register("username")} onFocus={() => setFormError('')} />
         </div>
         {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
         <div className="grid gap-2">
           <Label htmlFor="password-register">
             Contraseña
           </Label>
-          <Input id="password-register" type="password" {...register("password")} />
+          <Input id="password-register" type="password" {...register("password")} onFocus={() => setFormError('')} />
         </div>
         {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
         <div className="grid gap-2">
           <Label htmlFor="confirm-password-register">
             Confirmar Contraseña
           </Label>
-          <Input id="confirm-password-register" type="password" {...register("confirmPassword")} />
+          <Input id="confirm-password-register" type="password" {...register("confirmPassword")} onFocus={() => setFormError('')} />
         </div>
         {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>}
+        {formError && <p className="text-red-500 text-sm mt-2">{formError}</p>}
         <Button type="submit" className="w-full mt-2">Registrarse</Button>
       </div>
     </form>
