@@ -8,5 +8,5 @@ type MonsterCard struct {
 	Attribute string
 	Race      string
 
-	Card Card `gorm:"foreignKey:CardID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Card Card `gorm:"foreignKey:CardID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }

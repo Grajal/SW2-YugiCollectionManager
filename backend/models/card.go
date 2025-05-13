@@ -1,12 +1,10 @@
 package models
 
 type Card struct {
-	ID        uint `gorm:"primarykey"`
+	ID        uint `gorm:"primaryKey"`
+	CardYGOID int  `gorm:"unique;not null"`
 	Name      string
 	Desc      string
-	FrameType string // Ex: "xyx", "spell", "trap"
+	FrameType string
 	Type      string
-
-	MonsterCard *MonsterCard   `gorm:"foreignKey:CardID"`
-	SpellCard   *SpellTrapCard `gorm:"foreignKey:CardID"`
 }
