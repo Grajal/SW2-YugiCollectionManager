@@ -82,7 +82,6 @@ export function RegisterForm() {
           <Input id="confirm-password-register" type="password" {...register("confirmPassword")} />
         </div>
         {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>}
-        {formError && <p className="text-red-500 text-sm mt-2">{formError}</p>}
         <Button type="submit" className="w-full mt-2">Registrarse</Button>
       </div>
     </form>
