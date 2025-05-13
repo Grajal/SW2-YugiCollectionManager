@@ -24,8 +24,9 @@ func SetupRouter() *gin.Engine {
 		}
 
 		cards := api.Group("/cards")
+		cards.Use(middleware.AuthMiddleware())
 		{
-			cards.GET("/getNewCard", handlers.GetNewCard) // Get new card
+			cards.GET("/:param", handlers.GetOrFetchCard) // Get new card
 		}
 		auth := api.Group("/auth")
 		{
