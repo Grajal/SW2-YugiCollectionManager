@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label"
 import { loginSchema, LoginFormValues } from '@/lib/schemas/authSchemas'
 import { toast } from "sonner"
 import { useState } from 'react'
+
+const API_URL = import.meta.env.VITE_API_URL
+
 export function LoginForm() {
   const [formError, setFormError] = useState<string>('')
   const {
@@ -18,7 +21,7 @@ export function LoginForm() {
 
   const onLoginSubmit = async (data: LoginFormValues) => {
     try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
