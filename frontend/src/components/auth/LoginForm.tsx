@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { loginSchema, LoginFormValues } from '@/lib/schemas/authSchemas'
 import { toast } from "sonner"
+import { useState } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL
 
 export function LoginForm() {
+  const [formError, setFormError] = useState<string>('')
   const {
     register,
     handleSubmit,
@@ -28,18 +30,22 @@ export function LoginForm() {
       })
       const responseData = await response.json()
       if (!response.ok) {
-        const errorMessage = responseData.message || 'Error al iniciar sesión. Por favor, inténtalo de nuevo.'
-        throw new Error(errorMessage)
+        if (response.status === 401) {
+          throw new Error('Correo o contraseña incorrectos')
+        } else {
+          throw new Error('Error al iniciar sesión. Por favor, inténtalo de nuevo.')
+        }
       }
       console.log('Inicio de sesión exitoso:', responseData)
       toast.success("¡Bienvenido de nuevo!", {
         description: "Has iniciado sesión correctamente."
       })
     } catch (error) {
-      console.error('Error de inicio de sesión:', error)
-      toast.error("Error de Inicio de Sesión", {
-        description: 'Intentalo de nuevo más tarde'
-      })
+      if (error instanceof Error) {
+        setFormError(error.message)
+      } else {
+        setFormError('Hubo un error al iniciar sesión. Intentalo de nuevo más tarde')
+      }
     }
   }
 
@@ -47,19 +53,20 @@ export function LoginForm() {
     <form onSubmit={handleSubmit(onLoginSubmit)}>
       <div className="grid gap-4 py-4">
         <div className="grid gap-2">
-          <Label htmlFor="email-login">
-            Correo Electrónico
+          <Label htmlFor="username-login">
+            Nombre de usuario
           </Label>
-          <Input id="email-login" type="text" {...register("username")} />
+          <Input id="username-login" type="text" {...register("username")} onFocus={() => setFormError('')} />
         </div>
         {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
         <div className="grid gap-2">
           <Label htmlFor="password-login">
             Contraseña
           </Label>
-          <Input id="password-login" type="password" {...register("password")} />
+          <Input id="password-login" type="password" {...register("password")} onFocus={() => setFormError('')} />
         </div>
         {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
+        {formError && <p className="text-red-500 text-sm mt-2">{formError}</p>}
         <Button type="submit" className="w-full mt-2">Iniciar Sesión</Button>
       </div>
     </form>
