@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label"
 import { registerSchema, RegisterFormValues } from '@/lib/schemas/authSchemas'
 import { toast } from "sonner"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export function RegisterForm() {
   const {
     register,
@@ -24,7 +26,7 @@ export function RegisterForm() {
       }
       console.log('Enviando al backend:', payloadToSend)
 
-      const response = await fetch('http://localhost:8080/api/auth/register', {
+      const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,4 +86,4 @@ export function RegisterForm() {
       </div>
     </form>
   )
-} 
+}
