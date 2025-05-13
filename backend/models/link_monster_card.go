@@ -5,7 +5,6 @@ type LinkMonsterCard struct {
 	LinkValue   int
 	LinkMarkers []string `gorm:"type:jsonb"`
 	Atk         int
-	Def         int
 	Level       int
 	Attribute   string
 	Race        string
