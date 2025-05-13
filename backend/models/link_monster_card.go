@@ -4,7 +4,11 @@ type LinkMonsterCard struct {
 	CardID      uint `gorm:"primaryKey"`
 	LinkValue   int
 	LinkMarkers []string `gorm:"type:jsonb"`
-	MonsterBase
+	Atk         int
+	Def         int
+	Level       int
+	Attribute   string
+	Race        string
 
 	Card Card `gorm:"foreignKey:CardID;references:ID;contraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }

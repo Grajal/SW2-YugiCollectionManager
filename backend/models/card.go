@@ -7,4 +7,10 @@ type Card struct {
 	Desc      string
 	FrameType string
 	Type      string
+	ImageURL  string
+
+	MonsterCard         *MonsterCard
+	SpellTrapCard       *SpellTrapCard
+	LinkMonsterCard     *LinkMonsterCard
+	PendulumMonsterCard *PendulumMonsterCard
 }
