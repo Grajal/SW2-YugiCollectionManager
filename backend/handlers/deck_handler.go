@@ -24,7 +24,7 @@ func CreateDeck(c *gin.Context) {
 
 	deck, err := services.CreateDeck(userID, req.Name, req.Description)
 	if err != nil {
-		if errors.Is(err, services.ErrDeckAlreadyExists) {
+		if errors.Is(err, services.ErrDeckAlreadyExists) || errors.Is(err, services.ErrMaximumNumberOfDecks) {
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create deck"})
