@@ -43,7 +43,7 @@ func GetUserDecks(c *gin.Context) {
 		return
 	}
 
-	decks, err := services.GetDeckByUserID(userID.(uint))
+	decks, err := services.GetDecksByUserID(userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch decks"})
 		return

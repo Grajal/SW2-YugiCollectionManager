@@ -41,7 +41,19 @@ func CreateDeck(userID uint, name, description string) (*models.Deck, error) {
 	return &deck, nil
 }
 
-func GetDeckByUserID(userID uint) ([]models.Deck, error) {
+func getDeckByIDAndUserID(deckID, userID int) (*models.Deck, error) {
+	var deck models.Deck
+	err := database.DB.First(&deck, "id = ? AND user_id = ?", deckID, userID).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrDeckNotFound
+		}
+		return nil, err
+	}
+	return &deck, nil
+}
+
+func GetDecksByUserID(userID uint) ([]models.Deck, error) {
 	var decks []models.Deck
 	err := database.DB.Where("user_id = ?", userID).Find(&decks).Error
 	if err != nil {
