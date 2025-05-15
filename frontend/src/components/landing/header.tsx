@@ -114,7 +114,7 @@ const callsToAction = [
           <a href="#" className="text-sm/6 font-semibold text-white">
             Estadísticas
           </a>
-          <a href="#" className="text-sm/6 font-semibold text-white">
+          <a href="/cards" className="text-sm/6 font-semibold text-white">
             Cartas
           </a>
         </PopoverGroup>
