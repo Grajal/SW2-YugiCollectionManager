@@ -22,7 +22,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { ChevronDownIcon, PhoneIcon, PlayCircleIcon } from '@heroicons/react/20/solid'
 
-export function LandingHeader() {
+export function Header() {
   
 
 
@@ -112,13 +112,10 @@ const callsToAction = [
           </Popover>
 
           <a href="#" className="text-sm/6 font-semibold text-white">
-            Features
+            Estadísticas
           </a>
           <a href="#" className="text-sm/6 font-semibold text-white">
-            Marketplace
-          </a>
-          <a href="#" className="text-sm/6 font-semibold text-white">
-            Company
+            Cartas
           </a>
         </PopoverGroup>
         <div className="hidden lg:flex lg:flex-1 lg:justify-end">
