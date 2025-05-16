@@ -1,7 +1,6 @@
 "use client"
 
 import { Header } from "@/components/landing/header"
-import type React from "react"
 import { useState } from "react"
 import SearchBar from "@/components/search/searchBar"
 import { ResultsGrid } from "@/components/search/resultsGrid"
@@ -13,8 +12,8 @@ import type { FilterOptions, SearchResult } from "@/types/search"
 export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [archetypeQuery, setArchetypeQuery] = useState<string>("")
-  const [atkQuery, setAtkQuery] = useState<String>("")
-  const [defQuery, setDefQuery] = useState<String>("")
+  const [atkQuery, setAtkQuery] = useState<string>("")
+  const [defQuery, setDefQuery] = useState<string>("")
   const [filters, setFilters] = useState<FilterOptions>({
     tipo: "",
     atributo: "",
@@ -27,8 +26,8 @@ export default function SearchPage() {
 
   const resultsPerPage = 50
 
-  const data:SearchResult[] = []
-  
+  const data: SearchResult[] = []
+
   // Filtrar resultados basados en la búsqueda y filtros
   const filteredResults = data.filter((card) => {
     const nameMatches =
@@ -99,7 +98,7 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      <Header/>
+      <Header />
       <div className="container mx-auto px-4 py-8">
 
         <SearchBar onSearch={handleSearch} onFilterChange={handleFilterChange} filters={filters} />
