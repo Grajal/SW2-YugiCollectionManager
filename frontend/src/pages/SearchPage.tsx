@@ -11,15 +11,15 @@ import type { FilterOptions, SearchResult } from "@/types/search"
 
 export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState<string>("")
-  const [archetypeQuery, setArchetypeQuery] = useState<string>("")
-  const [atkQuery, setAtkQuery] = useState<string>("")
-  const [defQuery, setDefQuery] = useState<string>("")
+  const [archetypeQuery] = useState<string>("")
+  const [atkQuery] = useState<string>("")
+  const [defQuery] = useState<string>("")
   const [filters, setFilters] = useState<FilterOptions>({
     tipo: "",
     atributo: "",
     estrellas: "",
   })
-  const [currentResults, setCurrentResults] = useState<SearchResult[]>()
+  // const [currentResults, setCurrentResults] = useState<SearchResult[]>()
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [selectedCard, setSelectedCard] = useState<SearchResult | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false)
@@ -59,14 +59,14 @@ export default function SearchPage() {
   })
 
   // Calcular resultados para la página actual
-  const indexOfLastResult = currentPage * resultsPerPage
-  const indexOfFirstResult = indexOfLastResult - resultsPerPage
+  // const indexOfLastResult = currentPage * resultsPerPage
+  // const indexOfFirstResult = indexOfLastResult - resultsPerPage
   //const currentResults : SearchResult[] = filteredResults.slice(indexOfFirstResult, indexOfLastResult)
   const totalPages = Math.ceil(filteredResults.length / resultsPerPage)
 
-  const handleData = () => {
+  // const handleData = () => {
 
-  }
+  // }
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
