@@ -102,6 +102,7 @@ func (client *TestClient) PerformRequest(method, path string, body interface{}, 
 
 // NewTestClientWithAuth initializes a new TestClient with authentication and creates a user in DB
 func NewTestClient(authenticate bool) *TestClient {
+	gin.SetMode(gin.ReleaseMode) // disable debug logs for testing
 	router := SetupTestRouter()
 	client := &TestClient{Router: router}
 
