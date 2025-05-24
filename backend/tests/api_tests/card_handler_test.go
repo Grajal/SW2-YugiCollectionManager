@@ -9,6 +9,7 @@ import (
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
 	api_clients "github.com/Grajal/SW2-YugiCollectionManager/backend/tests/clients"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/tests/factories"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/utils"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -33,7 +34,7 @@ func TestGetCardMissingParameter(t *testing.T) {
 	client := api_clients.NewTestClient(true)
 
 	// Here assuming /api/cards/ expects a card name or id parameter, so calling root /api/cards/
-	response := client.PerformRequest("GET", "/api/cards/", nil, nil)
+	response := client.PerformRequest("GET", "/api/cards/ ", nil, nil)
 
 	// Expect bad request (400)
 	assert.Equal(t, http.StatusBadRequest, response.Code)
@@ -72,6 +73,11 @@ func TestGetCardNotInDb(t *testing.T) {
 	// Initialize the test client with authentication (creates a user and token)
 	client := api_clients.NewTestClient(true)
 
+	// Override UploadImagetoS3 function (mock for testing)
+	utils.UploadImage = func(cardID int, imageURL string) (string, error) {
+		return "https://mock-s3/test.jpg", nil
+	}
+
 	// Perform a GET request to /items
 	response := client.PerformRequest("GET", "/api/cards/Dark Magician", nil, nil)
 
@@ -83,7 +89,7 @@ func TestGetCardNotInDb(t *testing.T) {
 	expectedBody := models.Card{}
 
 	// Unmarshal the response to a slice of items and assert it matches the expected data
-	var actualItems []models.Card
+	var actualItems models.Card
 	err := json.Unmarshal(response.Body.Bytes(), &actualItems)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal response: %v", err)

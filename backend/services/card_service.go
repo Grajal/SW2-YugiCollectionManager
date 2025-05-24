@@ -30,10 +30,10 @@ func GetOrFetchCardByIDOrName(id int, name string) (*models.Card, error) {
 
 	apiCard, err := client.FetchCardByIDOrName(id, name)
 	if err != nil {
-		return nil, fmt.Errorf("card not foun in external API: %w", err)
+		return nil, fmt.Errorf("card not found in external API: %w", err)
 	}
 
-	s3URL, err := utils.UploadCardImageToS3(apiCard.ID, apiCard.ImageURL)
+	s3URL, err := utils.UploadImage(apiCard.ID, apiCard.ImageURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload image to S3: %w", err)
 	}
