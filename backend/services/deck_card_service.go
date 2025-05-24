@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -28,7 +29,7 @@ func AddCardToDeck(userID uint, deckID uint, cardID uint, quantity int) (*models
 		return nil, errors.New("quantity must be grater than 0")
 	}
 
-	deck, err := getDeckByIDAndUserID(int(deckID), int(userID))
+	deck, err := getDeckByIDAndUserID(deckID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("deck not found or unauthorized: %w", err)
 	}
@@ -65,7 +66,7 @@ func AddCardToDeck(userID uint, deckID uint, cardID uint, quantity int) (*models
 
 	newEntry := models.DeckCard{
 		DeckID:      deckID,
-		CardID:      cardID,
+		CardID:      card.ID,
 		Quantity:    quantity,
 		IsExtraDeck: isExtra,
 	}
@@ -86,17 +87,51 @@ func IsExtraDeckCard(frameType string) bool {
 	}
 }
 
+func RemoveCardFromDeck(userID, deckID, cardID uint, quantity int) error {
+	deck, err := getDeckByIDAndUserID(deckID, userID)
+	if err != nil {
+		return fmt.Errorf("deck not found or unathorized: %w", err)
+	}
+
+	var entry models.DeckCard
+	err = database.DB.Where("deck_id = ? AND card_id = ?", deck.ID, cardID).First(&entry).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("card not found in deck")
+		}
+		return fmt.Errorf("error fetching card from deck: %w", err)
+	}
+
+	if quantity >= entry.Quantity {
+		if err := database.DB.Delete(&entry).Error; err != nil {
+			return fmt.Errorf("failed to delete card from deck: %w", err)
+		}
+	} else {
+		entry.Quantity -= quantity
+		if err := database.DB.Save(&entry).Error; err != nil {
+			return fmt.Errorf("failed to update card quantity: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func ValidateDeckCardCount(deckID uint, isExtra bool, newCards int) error {
-	var total int64
+	var total sql.NullInt64
 	query := database.DB.Model(&models.DeckCard{}).Where("deck_id = ? AND is_extra_deck = ?", deckID, isExtra).Select("SUM(quantity)").Scan(&total)
 	if query.Error != nil {
 		return query.Error
 	}
 
-	if isExtra && total+int64(newCards) > 20 {
+	sum := int64(0)
+	if total.Valid {
+		sum = total.Int64
+	}
+
+	if isExtra && sum+int64(newCards) > 20 {
 		return ErrExtraDeckLimitReached
 	}
-	if !isExtra && total+int64(newCards) > 60 {
+	if !isExtra && sum+int64(newCards) > 60 {
 		return ErrDeckLimitReached
 	}
 	return nil

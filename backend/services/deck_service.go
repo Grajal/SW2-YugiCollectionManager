@@ -41,7 +41,7 @@ func CreateDeck(userID uint, name, description string) (*models.Deck, error) {
 	return &deck, nil
 }
 
-func getDeckByIDAndUserID(deckID, userID int) (*models.Deck, error) {
+func getDeckByIDAndUserID(deckID, userID uint) (*models.Deck, error) {
 	var deck models.Deck
 	err := database.DB.First(&deck, "id = ? AND user_id = ?", deckID, userID).Error
 	if err != nil {

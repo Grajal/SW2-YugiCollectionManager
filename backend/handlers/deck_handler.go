@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -12,6 +14,15 @@ import (
 type CreateDeckRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
+}
+
+type AddCardRequest struct {
+	CardID   uint `json:"card_id" binding:"required"`
+	Quantity int  `json:"quantity" binding:"required"`
+}
+
+type RemoveCardRequest struct {
+	Quantity int `json:"quantity" binding:"required"`
 }
 
 func CreateDeck(c *gin.Context) {
@@ -73,4 +84,71 @@ func DeleteDeck(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "deck deleted successfully"})
+}
+
+func AddCardToDeck(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
+
+	deckIDStr := c.Param("deckId")
+	fmt.Println("Param deckId:", c.Param("deckId"))
+	fmt.Println("full path:", c.FullPath())
+	deckID, err := strconv.ParseUint(deckIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid deck ID"})
+		return
+	}
+
+	var req AddCardRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	result, err := services.AddCardToDeck(userID, uint(deckID), req.CardID, req.Quantity)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrCardNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "Card not found"})
+			return
+		case errors.Is(err, services.ErrCardCopyLimitExceeded),
+			errors.Is(err, services.ErrDeckLimitReached),
+			errors.Is(err, services.ErrExtraDeckLimitReached):
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		default:
+			log.Println("Error al añadir cartal al deck:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add card to deck"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+func RemoveCardFromDeck(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
+
+	deckIDStr := c.Param("deckId")
+	cardIDStr := c.Param("cardId")
+
+	deckID, err1 := strconv.ParseUint(deckIDStr, 10, 64)
+	cardID, err2 := strconv.ParseUint(cardIDStr, 10, 64)
+
+	if err1 != nil || err2 != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid IDs"})
+		return
+	}
+
+	var req RemoveCardRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	err := services.RemoveCardFromDeck(userID, uint(deckID), uint(cardID), req.Quantity)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Card removed from deck"})
 }
