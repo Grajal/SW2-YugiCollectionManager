@@ -27,3 +27,6 @@ vendor/
 
 # Sistema
 Thumbs.db
+
+# Air tmp folder 
+tmp/
