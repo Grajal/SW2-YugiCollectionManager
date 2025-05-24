@@ -1,8 +1,13 @@
 package models
 
+import "gorm.io/gorm"
+
 type Deck struct {
-	ID     uint   `gorm:"primaryKey"`
-	UserID uint   `gorm:"not null"`
-	Name   string `gorm:"not null"`
-	Cards  []Card `gorm:"many2many:deck_cards;"`
+	gorm.Model
+	UserID      uint   `gorm:"not null"`
+	Name        string `gorm:"not null"`
+	Description string
+	User        User `gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE, OnDelete:CASCADE"`
+
+	Cards []DeckCard
 }
