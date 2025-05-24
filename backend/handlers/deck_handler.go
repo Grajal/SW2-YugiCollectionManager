@@ -86,6 +86,25 @@ func DeleteDeck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "deck deleted successfully"})
 }
 
+func GetCardByDeck(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
+
+	deckIDStr := c.Param("deckId")
+	deckID, err := strconv.ParseUint(deckIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid deck ID"})
+		return
+	}
+
+	cards, err := services.GetCardsByDeck(userID, uint(deckID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrive deck cards"})
+		return
+	}
+
+	c.JSON(http.StatusOK, cards)
+}
+
 func AddCardToDeck(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 

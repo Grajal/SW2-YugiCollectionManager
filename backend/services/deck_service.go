@@ -75,3 +75,20 @@ func DeleteDeck(deckID uint, userID uint) error {
 
 	return database.DB.Delete(&deck).Error
 }
+
+func GetCardsByDeck(userID, deckID uint) ([]models.DeckCard, error) {
+	var deck models.Deck
+	err := database.DB.Where("id = ? AND user_id = ?", deckID, userID).First(&deck).Error
+	if err != nil {
+		return nil, fmt.Errorf("deck not found or acces denied")
+	}
+
+	var deckCards []models.DeckCard
+	err = database.DB.Where("deck_id = ?", deckID).Preload("Card").Preload("Card.MonsterCard").Preload("Card.SpellTrapCard").Preload("Card.LinkMonsterCard").Preload("Card.PendulumMonsterCard").Find(&deckCards).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return deckCards, nil
+}
