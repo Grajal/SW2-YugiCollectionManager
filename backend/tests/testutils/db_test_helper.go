@@ -22,7 +22,7 @@ func createTestDB() {
 
 	defaultDSN := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		"db",
+		"localhost",
 		"user",
 		"password",
 		"postgres",
@@ -75,7 +75,7 @@ func SetupTestDatabase() {
 	createTestDB()
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		"db",
+		"localhost",
 		"user",
 		"password",
 		"prueba_test",
