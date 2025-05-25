@@ -46,7 +46,7 @@ func SetupRouter() *gin.Engine {
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", handlers.Login)
-			auth.POST("register", handlers.Register)
+			auth.POST("/register", handlers.Register)
 		}
 
 		auth = api.Group("/auth")
@@ -55,12 +55,22 @@ func SetupRouter() *gin.Engine {
 			auth.GET("/me", handlers.GetCurrentUser) // Get current user
 		}
 
-		collections := api.Group("/collection")
+		collections := api.Group("/collections")
 		collections.Use(middleware.AuthMiddleware())
 		{
 			collections.GET("/", handlers.GetColletion) // Get collection
 			collections.POST("/", handlers.AddCardToCollection)
-			collections.DELETE("/:card_id", handlers.DeleteCardFromCollection)
+			collections.DELETE("/:cardId", handlers.DeleteCardFromCollection)
+		}
+
+		decks := api.Group("/decks")
+		decks.Use(middleware.AuthMiddleware())
+		{
+			decks.POST("/", handlers.CreateDeck)
+			decks.GET("/", handlers.GetUserDecks)
+			decks.GET("/:deckId/cards", handlers.GetCardByDeck)
+			decks.POST("/:deckId/cards", handlers.AddCardToDeck)
+			decks.DELETE("/:deckId/cards/:cardId", handlers.RemoveCardFromDeck)
 		}
 	}
 
