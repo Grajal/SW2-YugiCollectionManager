@@ -36,7 +36,7 @@ func createTestDB() {
 	defer db.Close()
 
 	// Test DB name
-	testDBName := os.Getenv("PGNAME")
+	testDBName := os.Getenv("PGDATABASE")
 
 	// Terminate all connections to the test database
 	_, err = db.Exec(fmt.Sprintf(`
@@ -78,7 +78,7 @@ func SetupTestDatabase() {
 		os.Getenv("PGHOST"),
 		os.Getenv("PGUSER"),
 		os.Getenv("PGPASSWORD"),
-		os.Getenv("PGNAME"),
+		os.Getenv("PGDATABASE"),
 		os.Getenv("PGPORT"),
 	)
 

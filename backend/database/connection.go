@@ -36,7 +36,7 @@ func DBConnect() {
 	host := os.Getenv("PGHOST")
 	user := os.Getenv("PGUSER")
 	pw := os.Getenv("PGPASSWORD")
-	dbName := os.Getenv("PGNAME")
+	dbName := os.Getenv("PGDATABASE")
 	port := os.Getenv("PGPORT")
 	sslmode := os.Getenv("PGSSLMODE")
 
