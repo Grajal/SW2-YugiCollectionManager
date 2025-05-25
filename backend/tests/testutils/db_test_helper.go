@@ -25,7 +25,7 @@ func createTestDB() {
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
+		"postgres",
 		os.Getenv("DB_PORT"),
 	)
 
