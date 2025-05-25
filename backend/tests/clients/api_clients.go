@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -17,17 +16,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
-
-func init() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("⚠️  Warning: No .env file found (token signing may fail)")
-	} else {
-		log.Println(".env file loaded successfully in api_clients")
-	}
-}
 
 // SetupTestRouter sets up the Gin router for testing purposes
 func SetupTestRouter() *gin.Engine {
@@ -46,7 +36,7 @@ func GenerateTestJWT(userID uint) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Sign the token with the secret key
-	secret := os.Getenv("JWT_SECRET")
+	secret := "JWT_SECRET"
 	fmt.Println("Signing JWT with SECRET_KEY:", secret) // DEBUG
 	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {

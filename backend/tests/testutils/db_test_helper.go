@@ -11,7 +11,6 @@ import (
 
 	"testing"
 
-	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -20,24 +19,14 @@ import (
 
 // Create a new test DB, if it doesn't exist
 func createTestDB() {
-	// Connect to the default database (e.g., postgres) to create the test DB
-	if _, err := os.Stat(".env"); err == nil {
-		if err := godotenv.Load(); err != nil {
-			log.Fatalf("Error loading .env file")
-		} else {
-			log.Println("Loaded .env file")
-		}
-	} else {
-		log.Println("No .env file found; assuming database is already connected")
-	}
 
 	defaultDSN := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		os.Getenv("PGHOST"),
-		os.Getenv("PGUSER"),
-		os.Getenv("PGPASSWORD"),
+		"db",
+		"user",
+		"password",
 		"postgres",
-		os.Getenv("PGPORT"),
+		"5432",
 	)
 
 	db, err := sql.Open("postgres", defaultDSN)
@@ -47,7 +36,7 @@ func createTestDB() {
 	defer db.Close()
 
 	// Test DB name
-	testDBName := os.Getenv("PGDATABASE") + "_test"
+	testDBName := "prueba_test"
 
 	// Terminate all connections to the test database
 	_, err = db.Exec(fmt.Sprintf(`
@@ -82,24 +71,15 @@ var TestDB *gorm.DB
 
 // SetupTestDatabase sets up the test database connection and runs migrations
 func SetupTestDatabase() {
-	if _, err := os.Stat(".env"); err == nil {
-		if err := godotenv.Load(); err != nil {
-			log.Fatalf("Error loading .env file")
-		} else {
-			log.Println("Loaded .env file")
-		}
-	} else {
-		log.Println("No .env file found; assuming database is already connected")
-	}
 
 	createTestDB()
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		os.Getenv("PGHOST"),
-		os.Getenv("PGUSER"),
-		os.Getenv("PGPASSWORD"),
-		os.Getenv("PGDATABASE")+"_test",
-		os.Getenv("PGPORT"),
+		"db",
+		"user",
+		"password",
+		"prueba_test",
+		"5432",
 	)
 
 	var err error
