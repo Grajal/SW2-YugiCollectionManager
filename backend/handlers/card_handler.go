@@ -58,23 +58,23 @@ func GetCards(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"totalCards": total, "cards": cards})
 }
 
-func GetFilteredCards(c *gin.Context) {
+// SearchCards handles GET requests to search cards in the database.
+// It filters by name, type, and archetype. If no results are found locally,
+// it tries to fetch similar cards from the external YGOProDeck API.
+func SearchCards(c *gin.Context) {
 	name := c.Query("name")
 	cardType := c.Query("type")
 	archetype := c.Query("archetype")
 
-	// Límite y offset para paginación
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	// Buscar en la base de datos
 	cards, err := services.GetFilteredCards(name, cardType, archetype, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve cards from database"})
 		return
 	}
 
-	// Si no se encontraron cartas y hay un nombre, buscar en la API
 	if len(cards) == 0 && name != "" {
 		fetchedCards, err := services.FetchAndStoreCardsByName(name)
 		if err != nil {

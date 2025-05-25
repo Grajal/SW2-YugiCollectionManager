@@ -144,17 +144,15 @@ func EnsureMinimumCards(min int) error {
 			continue
 		}
 
-		// Comprobar duplicados
 		var existing models.Card
 		err := database.DB.Where("card_ygo_id = ?", apiCard.ID).First(&existing).Error
 		if err == nil {
-			continue // ya existe
+			continue
 		}
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("error checking card: %w", err)
 		}
 
-		// Obtener imagen
 		imageURL := ""
 		if len(apiCard.CardImages) > 0 {
 			imageURL = apiCard.CardImages[0].ImageURL
@@ -174,6 +172,8 @@ func EnsureMinimumCards(min int) error {
 	return nil
 }
 
+// GetCardsByFilters returns cards filtered by name, type, and archetype from the database.
+// If no cards match, it attempts to fetch new ones from the external API and save them.
 func GetFilteredCards(name, cardType, archetype string, limit, offset int) ([]models.Card, error) {
 	db := database.DB.Model(&models.Card{}).
 		Preload("MonsterCard").
@@ -222,7 +222,6 @@ func FetchAndStoreCardsByName(name string) ([]models.Card, error) {
 
 	var stored []models.Card
 	for _, apiCard := range apiCards {
-		// Validación mínima
 		if apiCard.ID == 0 || apiCard.Name == "" {
 			continue
 		}
@@ -237,7 +236,6 @@ func FetchAndStoreCardsByName(name string) ([]models.Card, error) {
 			continue
 		}
 
-		// Subida de imagen a S3
 		s3URL, err := utils.UploadCardImageToS3(apiCard.ID, apiCard.CardImages[0].ImageURL)
 		if err != nil {
 			continue
