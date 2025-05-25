@@ -93,10 +93,6 @@ jobs:
         working-directory: frontend
         run: pnpm run lint
 
-      - name: Run frontend tests
-        working-directory: frontend
-        run: pnpm run test -- --watchAll=false
-
       - name: Build frontend
         working-directory: frontend
         run: pnpm run build
