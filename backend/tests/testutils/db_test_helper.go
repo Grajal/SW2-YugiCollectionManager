@@ -89,7 +89,19 @@ func SetupTestDatabase() {
 	}
 
 	// Run migrations (you can add your models here)
-	TestDB.AutoMigrate(models.User{}, models.Card{}, models.SpellTrapCard{}, models.MonsterCard{}, models.LinkMonsterCard{}, models.PendulumMonsterCard{}, models.UserCard{}, models.Deck{})
+	if err := TestDB.AutoMigrate(
+		models.User{},
+		models.Card{},
+		models.SpellTrapCard{},
+		models.MonsterCard{},
+		models.LinkMonsterCard{},
+		models.PendulumMonsterCard{},
+		models.UserCard{},
+		models.Deck{},
+	); err != nil {
+		log.Fatalf("Failed to auto migrate database schema: %v", err)
+	}
+
 }
 
 // ResetTestDatabase resets the database after each test
