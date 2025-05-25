@@ -14,6 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
+var UploadImage = UploadCardImageToS3
+
 func UploadCardImageToS3(cardID int, imageURL string) (string, error) {
 	ctx := context.Background()
 
