@@ -1,12 +1,14 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/client"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/utils"
+	"gorm.io/gorm"
 )
 
 func GetOrFetchCardByIDOrName(id int, name string) (*models.Card, error) {
@@ -99,4 +101,75 @@ func BuildCardFromAPICard(apiCard *client.APICard, imageURL string) models.Card 
 	}
 
 	return card
+}
+
+func GetCards(limit int, offset int) ([]models.Card, error) {
+	var cards []models.Card
+
+	err := database.DB.Preload("MonsterCard").Preload("SpellTrapCard").Preload("LinkMonsterCard").Preload("PendulumMonsterCard").Limit(limit).Offset(offset).Find(&cards).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve cards: %w", err)
+	}
+
+	return cards, nil
+}
+
+func CountAllCards() (int64, error) {
+	var count int64
+	err := database.DB.Model(&models.Card{}).Count(&count).Error
+	return count, err
+}
+
+func EnsureMinimumCards(min int) error {
+	var count int64
+	err := database.DB.Model(&models.Card{}).Count(&count).Error
+	if err != nil {
+		return fmt.Errorf("failed to count cards: %w", err)
+	}
+
+	if count >= int64(min) {
+		return nil
+	}
+
+	needed := int(int64(min) - count)
+	apiCards, err := client.FetchRandomCards(needed)
+	if err != nil {
+		return fmt.Errorf("failed to fetch new cards: %w", err)
+	}
+
+	for _, apiCard := range apiCards {
+		if apiCard.ID == 0 {
+			fmt.Println("Invalid card received from API:", apiCard)
+			continue
+		}
+
+		// Comprobar duplicados
+		var existing models.Card
+		err := database.DB.Where("card_ygo_id = ?", apiCard.ID).First(&existing).Error
+		if err == nil {
+			continue // ya existe
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("error checking card: %w", err)
+		}
+
+		// Obtener imagen
+		imageURL := ""
+		if len(apiCard.CardImages) > 0 {
+			imageURL = apiCard.CardImages[0].ImageURL
+		}
+
+		s3URL, err := utils.UploadCardImageToS3(apiCard.ID, imageURL)
+		if err != nil {
+			continue
+		}
+
+		newCard := BuildCardFromAPICard(&apiCard, s3URL)
+		if err := database.DB.Create(&newCard).Error; err != nil {
+			return fmt.Errorf("failed to store new card: %w", err)
+		}
+	}
+
+	return nil
 }

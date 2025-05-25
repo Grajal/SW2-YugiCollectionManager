@@ -70,3 +70,34 @@ func FetchCardByIDOrName(id int, name string) (*APICard, error) {
 	card.ImageURL = card.CardImages[0].ImageURL
 	return &card, nil
 }
+
+func FetchRandomCards(n int) ([]APICard, error) {
+	url := "https://db.ygoprodeck.com/api/v7/randomcard.php"
+	var cards []APICard
+
+	for i := 0; i < n; i++ {
+		resp, err := http.Get(url)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch card %d: %w", i, err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
+		}
+
+		var apiResp CardResponse
+		if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+			return nil, fmt.Errorf("failed to decode card %d: %w", i, err)
+		}
+
+		if len(apiResp.Data) == 0 || apiResp.Data[0].ID == 0 {
+			fmt.Println("Invalid card received")
+			continue
+		}
+
+		cards = append(cards, apiResp.Data[0])
+	}
+
+	return cards, nil
+}
