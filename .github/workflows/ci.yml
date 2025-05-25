@@ -2,13 +2,13 @@ name: YugiCollectionManager CI
 
 on:
   push:
-    branches: ["main"]
+    branches: ['main']
   pull_request:
-    branches: ["main"]
+    branches: ['main']
 
 jobs:
   backend-check:
-    name: Backend Check 
+    name: Backend Check
     runs-on: ubuntu-latest
 
     services:
@@ -82,18 +82,21 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install pnpm
+        run: npm install -g pnpm
+
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: pnpm install
 
       - name: Lint code
         working-directory: frontend
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Run frontend tests
         working-directory: frontend
-        run: npm run test -- --watchAll=false
+        run: pnpm run test -- --watchAll=false
 
       - name: Build frontend
         working-directory: frontend
-        run: npm run build
+        run: pnpm run build
