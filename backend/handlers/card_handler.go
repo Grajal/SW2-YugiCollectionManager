@@ -33,6 +33,8 @@ func GetOrFetchCard(c *gin.Context) {
 	c.JSON(http.StatusOK, card)
 }
 
+// GetCards is a Gin handler that retrieves a paginated list of cards from the database.
+// If the number of cards in the database is below a defined minimum, it fetches new random cards from the external API.
 func GetCards(c *gin.Context) {
 	const MinCardCount = 20
 	if err := services.EnsureMinimumCards(MinCardCount); err != nil {
@@ -55,7 +57,7 @@ func GetCards(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"totalCards": total, "cards": cards})
+	c.JSON(http.StatusOK, gin.H{"totalCards": total, "Some cards": cards})
 }
 
 // SearchCards handles GET requests to search cards in the database.

@@ -73,6 +73,8 @@ func FetchCardByIDOrName(id int, name string) (*APICard, error) {
 	return &card, nil
 }
 
+// FetchRandomCards retrieves a specified number of random Yu-Gi-Oh! cards from the YGOProDeck API.
+// It ensures that no more than MaxFetch cards are requested in a single operation.
 func FetchRandomCards(n int) ([]APICard, error) {
 	if n > MaxFetch {
 		n = MaxFetch
@@ -108,6 +110,8 @@ func FetchRandomCards(n int) ([]APICard, error) {
 	return cards, nil
 }
 
+// FetchCardsByName queries the YGOProDeck API for cards that match the given name (partial match).
+// It uses the 'fname' query parameter to perform fuzzy name search.
 func FetchCardsByName(name string) ([]APICard, error) {
 	url := fmt.Sprintf("https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=%s", url.QueryEscape(name))
 	resp, err := http.Get(url)

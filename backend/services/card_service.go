@@ -50,6 +50,8 @@ func GetOrFetchCardByIDOrName(id int, name string) (*models.Card, error) {
 	return &newCard, nil
 }
 
+// BuildCardFromAPICard constructs a models.Card object from a given APICard retrieved from the external API.
+// It maps the general card fields and dynamically assigns the appropriate substructure based on the card type.
 func BuildCardFromAPICard(apiCard *client.APICard, imageURL string) models.Card {
 	card := models.Card{
 		CardYGOID: apiCard.ID,
@@ -103,6 +105,10 @@ func BuildCardFromAPICard(apiCard *client.APICard, imageURL string) models.Card 
 	return card
 }
 
+// GetCards retrieves a paginated list of cards from the database, including all their subtype associations.
+// Parameters:
+//   - limit: the maximum number of cards to retrieve.
+//   - offset: the number of cards to skip before starting to return results (used for pagination).
 func GetCards(limit int, offset int) ([]models.Card, error) {
 	var cards []models.Card
 
@@ -115,12 +121,16 @@ func GetCards(limit int, offset int) ([]models.Card, error) {
 	return cards, nil
 }
 
+// CountAllCards returns the total number of cards stored in the database.
 func CountAllCards() (int64, error) {
 	var count int64
 	err := database.DB.Model(&models.Card{}).Count(&count).Error
 	return count, err
 }
 
+// EnsureMinimumCards checks if there are at least 'min' cards stored in the database.
+// If not, it fetches the missing number of random cards from the external YGOProDeck API
+// and stores them in the database (including uploading their images to S3).
 func EnsureMinimumCards(min int) error {
 	var count int64
 	err := database.DB.Model(&models.Card{}).Count(&count).Error
@@ -196,6 +206,8 @@ func GetFilteredCards(name, cardType, archetype string, limit, offset int) ([]mo
 	return cards, err
 }
 
+// CountFilteredCards returns the number of cards in the database that match the provided filters.
+// It supports filtering by name (case-insensitive, partial match), card type, and archetype.
 func CountFilteredCards(name, cardType, archetype string) (int64, error) {
 	db := database.DB.Model(&models.Card{})
 
@@ -214,6 +226,9 @@ func CountFilteredCards(name, cardType, archetype string) (int64, error) {
 	return count, err
 }
 
+// FetchAndStoreCardsByName fetches cards from the external YGOProDeck API based on a name filter.
+// It stores only the cards that don't already exist in the database, uploading their images to S3.
+// It returns a list of the stored (or previously existing) cards.
 func FetchAndStoreCardsByName(name string) ([]models.Card, error) {
 	apiCards, err := client.FetchCardsByName(name)
 	if err != nil {
