@@ -15,7 +15,7 @@ import (
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
-	allowedOrigins := "http://localhost:5173,https://sw-2-yugi-collection-manager.vercel.app/"
+	allowedOrigins := "http://localhost:5173,https://sw-2-yugi-collection-manager.vercel.app"
 
 	origins := strings.Split(allowedOrigins, ",")
 
