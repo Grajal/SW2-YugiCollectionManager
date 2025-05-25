@@ -7,9 +7,12 @@ import { ResultsGrid } from "@/components/search/resultsGrid"
 import { Sidebar } from "@/components/search/sidebar"
 import Pagination from "@/components/search/resultsPagination"
 import type { FilterOptions, SearchResult } from "@/types/search"
+import { useUser } from '@/contexts/UserContext'
 
 
 export default function SearchPage() {
+  const { user } = useUser()
+
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [archetypeQuery] = useState<string>("")
   const [atkQuery] = useState<string>("")
@@ -98,7 +101,7 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      <Header />
+      <Header username={user?.Username || ''} />
       <div className="container mx-auto px-4 py-8">
 
         <SearchBar onSearch={handleSearch} onFilterChange={handleFilterChange} filters={filters} />
