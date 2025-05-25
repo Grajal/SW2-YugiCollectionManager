@@ -22,11 +22,11 @@ func createTestDB() {
 
 	defaultDSN := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
+		os.Getenv("PG_HOST"),
+		os.Getenv("PG_USER"),
+		os.Getenv("PG_PASSWORD"),
 		"postgres",
-		os.Getenv("DB_PORT"),
+		os.Getenv("PG_PORT"),
 	)
 
 	db, err := sql.Open("postgres", defaultDSN)
@@ -36,7 +36,7 @@ func createTestDB() {
 	defer db.Close()
 
 	// Test DB name
-	testDBName := os.Getenv("DB_NAME")
+	testDBName := os.Getenv("PG_NAME")
 
 	// Terminate all connections to the test database
 	_, err = db.Exec(fmt.Sprintf(`
@@ -75,11 +75,11 @@ func SetupTestDatabase() {
 	createTestDB()
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_PORT"),
+		os.Getenv("PG_HOST"),
+		os.Getenv("PG_USER"),
+		os.Getenv("PG_PASSWORD"),
+		os.Getenv("PG_NAME"),
+		os.Getenv("PG_PORT"),
 	)
 
 	var err error

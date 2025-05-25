@@ -26,11 +26,11 @@ jobs:
           --health-retries 5
 
     env:
-      DB_HOST: localhost
-      DB_PORT: 5432
-      DB_USER: test
-      DB_PASSWORD: test
-      DB_NAME: prueba_test
+      PG_HOST: localhost
+      PG_PORT: 5432
+      PG_USER: test
+      PG_PASSWORD: test
+      PG_NAME: prueba_test
       # Add other env vars your app expects, or map them as needed
 
     steps:
