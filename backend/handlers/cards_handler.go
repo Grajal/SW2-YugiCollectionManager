@@ -3,13 +3,14 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/services"
 	"github.com/gin-gonic/gin"
 )
 
 func GetOrFetchCard(c *gin.Context) {
-	param := c.Param("param")
+	param := strings.TrimSpace(c.Param("param"))
 	if param == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing parameter (ID or name)"})
 		return

@@ -2,7 +2,6 @@ package api_tests
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -43,30 +42,38 @@ func TestGetCardMissingParameter(t *testing.T) {
 	var body map[string]string
 	err := json.Unmarshal(response.Body.Bytes(), &body)
 	assert.NoError(t, err)
-	assert.Contains(t, body["error"], "missing parameter")
+	assert.Contains(t, body["error"], "Missing parameter")
 }
 
 func TestGetCardAlreadyInDb(t *testing.T) {
 	client := api_clients.NewTestClient(true)
 
-	// Setup: Insert a card directly into DB (assuming you have a helper or factory)
-	cardInDb := models.Card{
-		Name: "Blue-Eyes White Dragon",
-		// fill in other fields as needed
-	}
+	// Setup: Insert a card using the factory
+	expectedCard := factories.CardFactory("Blue-Eyes White Dragon")
 
-	factories.CardFactory("Blue-Eyes White Dragon")
-
-	// Request the card by name
+	// Perform API request to fetch the card by name
 	response := client.PerformRequest("GET", "/api/cards/Blue-Eyes White Dragon", nil, nil)
 
-	// Expect 200 OK and card returned
+	// Assert response status
 	assert.Equal(t, http.StatusOK, response.Code)
 
+	// Unmarshal response body
 	var returnedCard models.Card
 	err := json.Unmarshal(response.Body.Bytes(), &returnedCard)
 	assert.NoError(t, err)
-	assert.Equal(t, cardInDb.Name, returnedCard.Name)
+
+	// Assert key fields match
+	assert.Equal(t, expectedCard.ID, returnedCard.ID)
+	assert.Equal(t, expectedCard.CardYGOID, returnedCard.CardYGOID)
+	assert.Equal(t, expectedCard.Name, returnedCard.Name)
+	assert.Equal(t, expectedCard.Desc, returnedCard.Desc)
+	assert.Equal(t, expectedCard.Type, returnedCard.Type)
+	assert.Equal(t, expectedCard.ImageURL, returnedCard.ImageURL)
+	assert.Equal(t, expectedCard.FrameType, returnedCard.FrameType)
+
+	// Optional: if you later extend CardFactory to include MonsterCard, you can assert that too
+	// assert.NotNil(t, returnedCard.MonsterCard)
+	// assert.Equal(t, expectedCard.MonsterCard.Atk, returnedCard.MonsterCard.Atk)
 }
 
 func TestGetCardNotInDb(t *testing.T) {
@@ -83,19 +90,27 @@ func TestGetCardNotInDb(t *testing.T) {
 
 	// Assert that the response code is 200 OK
 	assert.Equal(t, http.StatusOK, response.Code)
-	fmt.Println(response.Body.String())
-
-	// Define the expected items response (make sure the structure matches the JSON output)
-	expectedBody := models.Card{}
 
 	// Unmarshal the response to a slice of items and assert it matches the expected data
-	var actualItems models.Card
-	err := json.Unmarshal(response.Body.Bytes(), &actualItems)
+	var actualCard models.Card
+	err := json.Unmarshal(response.Body.Bytes(), &actualCard)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal response: %v", err)
 		t.Logf("Received non-200 response: %d, body: %s", response.Code, response.Body.String())
 	}
 
 	// Assert that the returned items match what was created
-	assert.Equal(t, expectedBody, actualItems)
+	assert.Equal(t, 46986414, actualCard.CardYGOID)
+	assert.Equal(t, "Dark Magician", actualCard.Name)
+	assert.Equal(t, "Normal Monster", actualCard.Type)
+	assert.Equal(t, "normal", actualCard.FrameType)
+	assert.Equal(t, "''The ultimate wizard in terms of attack and defense.''", actualCard.Desc)
+
+	assert.NotNil(t, actualCard.MonsterCard)
+	assert.Equal(t, 2500, actualCard.MonsterCard.Atk)
+	assert.Equal(t, 2100, actualCard.MonsterCard.Def)
+	assert.Equal(t, 7, actualCard.MonsterCard.Level)
+	assert.Equal(t, "DARK", actualCard.MonsterCard.Attribute)
+	assert.Equal(t, "Spellcaster", actualCard.MonsterCard.Race)
+
 }
