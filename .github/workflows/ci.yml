@@ -30,7 +30,7 @@ jobs:
       PGPORT: 5432
       PGUSER: test
       PGPASSWORD: test
-      PGNAME: prueba_test
+      PGDATABASE: prueba_test
       # Add other env vars your app expects, or map them as needed
 
     steps:
