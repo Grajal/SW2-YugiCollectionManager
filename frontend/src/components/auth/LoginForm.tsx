@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { loginSchema, LoginFormValues } from '@/lib/schemas/authSchemas'
-import { toast } from "sonner"
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const API_URL = import.meta.env.VITE_API_URL
 
 export function LoginForm() {
   const [formError, setFormError] = useState<string>('')
+  const navigate = useNavigate()
   const {
     register,
     handleSubmit,
@@ -29,7 +30,6 @@ export function LoginForm() {
         credentials: 'include',
         body: JSON.stringify(data),
       })
-      const responseData = await response.json()
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error('Correo o contraseña incorrectos')
@@ -37,10 +37,8 @@ export function LoginForm() {
           throw new Error('Error al iniciar sesión. Por favor, inténtalo de nuevo.')
         }
       }
-      console.log('Inicio de sesión exitoso:', responseData)
-      toast.success("¡Bienvenido de nuevo!", {
-        description: "Has iniciado sesión correctamente."
-      })
+
+      navigate('/cards')
     } catch (error) {
       if (error instanceof Error) {
         setFormError(error.message)
