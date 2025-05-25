@@ -2,13 +2,13 @@ name: YugiCollectionManager CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
-  railway-check:
-    name: Backend Check (Railway-Compatible)
+  backend-check:
+    name: Backend Check 
     runs-on: ubuntu-latest
 
     services:
@@ -26,22 +26,13 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    env:
-      PGHOST: localhost
-      PGPORT: 5432
-      PGUSER: test
-      PGPASSWORD: test
-      PGDATABASE: prueba_test
-      # Add other required env vars here (JWT_SECRET, AWS creds, etc.)
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
-          check-latest: true
+          go-version: '1.21'
 
       - name: Install dependencies
         run: go mod download
@@ -55,8 +46,14 @@ jobs:
           done
 
       - name: Run unit and integration tests
-        run: go test -v ./...
         working-directory: backend
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: test
+          PGPASSWORD: test
+          PGDATABASE: prueba_test
+        run: go test -v ./...
 
       - name: Build backend
         run: go build -v ./...
@@ -77,10 +74,6 @@ jobs:
     name: Frontend Check
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: frontend
-
     steps:
       - uses: actions/checkout@v4
 
@@ -90,13 +83,17 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
+        working-directory: frontend
         run: npm ci
 
       - name: Lint code
+        working-directory: frontend
         run: npm run lint
 
       - name: Run frontend tests
+        working-directory: frontend
         run: npm run test -- --watchAll=false
 
       - name: Build frontend
+        working-directory: frontend
         run: npm run build
