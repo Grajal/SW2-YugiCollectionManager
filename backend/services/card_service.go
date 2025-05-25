@@ -173,3 +173,81 @@ func EnsureMinimumCards(min int) error {
 
 	return nil
 }
+
+func GetFilteredCards(name, cardType, archetype string, limit, offset int) ([]models.Card, error) {
+	db := database.DB.Model(&models.Card{}).
+		Preload("MonsterCard").
+		Preload("SpellTrapCard").
+		Preload("LinkMonsterCard").
+		Preload("PendulumMonsterCard")
+
+	if name != "" {
+		db = db.Where("name ILIKE ?", "%"+name+"%")
+	}
+	if cardType != "" {
+		db = db.Where("type = ?", cardType)
+	}
+	if archetype != "" {
+		db = db.Where("archetype = ?", archetype)
+	}
+
+	var cards []models.Card
+	err := db.Limit(limit).Offset(offset).Find(&cards).Error
+	return cards, err
+}
+
+func CountFilteredCards(name, cardType, archetype string) (int64, error) {
+	db := database.DB.Model(&models.Card{})
+
+	if name != "" {
+		db = db.Where("name ILIKE ?", "%"+name+"%")
+	}
+	if cardType != "" {
+		db = db.Where("type = ?", cardType)
+	}
+	if archetype != "" {
+		db = db.Where("archetype = ?", archetype)
+	}
+
+	var count int64
+	err := db.Count(&count).Error
+	return count, err
+}
+
+func FetchAndStoreCardsByName(name string) ([]models.Card, error) {
+	apiCards, err := client.FetchCardsByName(name)
+	if err != nil {
+		return nil, err
+	}
+
+	var stored []models.Card
+	for _, apiCard := range apiCards {
+		// Validación mínima
+		if apiCard.ID == 0 || apiCard.Name == "" {
+			continue
+		}
+
+		var existing models.Card
+		err := database.DB.Where("card_ygo_id = ?", apiCard.ID).First(&existing).Error
+		if err == nil {
+			stored = append(stored, existing)
+			continue
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			continue
+		}
+
+		// Subida de imagen a S3
+		s3URL, err := utils.UploadCardImageToS3(apiCard.ID, apiCard.CardImages[0].ImageURL)
+		if err != nil {
+			continue
+		}
+
+		card := BuildCardFromAPICard(&apiCard, s3URL)
+		if err := database.DB.Create(&card).Error; err == nil {
+			stored = append(stored, card)
+		}
+	}
+
+	return stored, nil
+}

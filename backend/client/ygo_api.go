@@ -38,6 +38,8 @@ type CardResponse struct {
 	Data []APICard `json:"data"`
 }
 
+const MaxFetch = 10
+
 func FetchCardByIDOrName(id int, name string) (*APICard, error) {
 	var endpoint string
 	if id > 0 {
@@ -72,6 +74,10 @@ func FetchCardByIDOrName(id int, name string) (*APICard, error) {
 }
 
 func FetchRandomCards(n int) ([]APICard, error) {
+	if n > MaxFetch {
+		n = MaxFetch
+	}
+
 	url := "https://db.ygoprodeck.com/api/v7/randomcard.php"
 	var cards []APICard
 
@@ -100,4 +106,26 @@ func FetchRandomCards(n int) ([]APICard, error) {
 	}
 
 	return cards, nil
+}
+
+func FetchCardsByName(name string) ([]APICard, error) {
+	url := fmt.Sprintf("https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=%s", url.QueryEscape(name))
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API responded with status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Data []APICard `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	return result.Data, nil
 }
