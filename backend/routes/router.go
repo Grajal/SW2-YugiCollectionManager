@@ -62,7 +62,7 @@ func SetupRouter() *gin.Engine {
 		{
 			collections.GET("/", handlers.GetColletion) // Get collection
 			collections.POST("/", handlers.AddCardToCollection)
-			collections.DELETE("/:cardId", handlers.DeleteCardFromCollection)
+			collections.DELETE("/:cardId", handlers.DeleteQuantityCardsFromCollcetion)
 		}
 
 		decks := api.Group("/decks")

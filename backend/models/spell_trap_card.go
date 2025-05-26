@@ -1,8 +1,6 @@
 package models
 
 type SpellTrapCard struct {
-	CardID uint `gorm:"primaryKey"`
+	CardID uint `gorm:"primaryKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Type   string
-
-	Card Card `gorm:"foreignKey:CardID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
