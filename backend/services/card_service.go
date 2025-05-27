@@ -187,9 +187,9 @@ func EnsureMinimumCards(min int) error {
 	return nil
 }
 
-// GetCardsByFilters returns cards filtered by name, type, and archetype from the database.
+// GetCardsByFilters returns cards filtered by name, type, and frameType from the database.
 // If no cards match, it attempts to fetch new ones from the external API and save them.
-func GetFilteredCards(name, cardType, archetype string, limit, offset int) ([]models.Card, error) {
+func GetFilteredCards(name, cardType, frameType string, limit, offset int) ([]models.Card, error) {
 	db := database.DB.Model(&models.Card{}).
 		Preload("MonsterCard").
 		Preload("SpellTrapCard").
@@ -202,8 +202,8 @@ func GetFilteredCards(name, cardType, archetype string, limit, offset int) ([]mo
 	if cardType != "" {
 		db = db.Where("type = ?", cardType)
 	}
-	if archetype != "" {
-		db = db.Where("archetype = ?", archetype)
+	if frameType != "" {
+		db = db.Where("frame_type = ?", frameType)
 	}
 
 	var cards []models.Card
@@ -212,8 +212,8 @@ func GetFilteredCards(name, cardType, archetype string, limit, offset int) ([]mo
 }
 
 // CountFilteredCards returns the number of cards in the database that match the provided filters.
-// It supports filtering by name (case-insensitive, partial match), card type, and archetype.
-func CountFilteredCards(name, cardType, archetype string) (int64, error) {
+// It supports filtering by name (case-insensitive, partial match), card type, and frameType.
+func CountFilteredCards(name, cardType, frameType string) (int64, error) {
 	db := database.DB.Model(&models.Card{})
 
 	if name != "" {
@@ -222,8 +222,8 @@ func CountFilteredCards(name, cardType, archetype string) (int64, error) {
 	if cardType != "" {
 		db = db.Where("type = ?", cardType)
 	}
-	if archetype != "" {
-		db = db.Where("archetype = ?", archetype)
+	if frameType != "" {
+		db = db.Where("frame_type = ?", frameType)
 	}
 
 	var count int64
@@ -239,7 +239,7 @@ func FetchAndStoreCardsByName(name string) ([]models.Card, error) {
 	if err != nil {
 		return nil, err
 	}
-	if apiCards == nil || len(apiCards) == 0 {
+	if len(apiCards) == 0 {
 		return nil, nil
 	}
 
