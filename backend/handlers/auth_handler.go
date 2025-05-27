@@ -42,7 +42,7 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
-  
+
 	user.Password = ""
 	domain := os.Getenv("COOKIE_DOMAIN")
 	if domain == "" {
@@ -59,7 +59,7 @@ func Login(c *gin.Context) {
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
 	})
-	c.JSON(http.StatusOK, gin.H{"message": "login successful"})
+	c.JSON(http.StatusOK, gin.H{"message": "login successful", "user": user})
 }
 
 func Register(c *gin.Context) {
@@ -104,7 +104,7 @@ func GetCurrentUser(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := database.DB.First(&user, userID).Error; err != nil {
+	if err := database.DB.Preload("Collection.Card").Preload("Collection").Preload("Decks").First(&user, userID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
 		return
 	}

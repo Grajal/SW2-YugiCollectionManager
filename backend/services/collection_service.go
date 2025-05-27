@@ -9,14 +9,21 @@ import (
 	"gorm.io/gorm"
 )
 
-// GetCollectionByUserID retrieves the collection of cards for a specific user.
-// It queries the database for all UserCard records associated with the given user ID.
-// The "Card" relationship is preloaded to include card details in the result.
-// Returns the list of UserCard records or an error if the query fails.
+// GetCollectionByUserID retrieves the full collection of cards for a user,
+// including all subtypes of the cards (Monster, Spell/Trap, Link, Pendulum).
 func GetCollectionByUserID(userID uint) ([]models.UserCard, error) {
 	var userCards []models.UserCard
 
-	if err := database.DB.Preload("Card").Preload("Card.MonsterCard").Preload("Card.SpellTrapCard").Preload("Card.LinkMonsterCard").Preload("Card.PendulumMonsterCard").Where("user_id = ?", userID).Find(&userCards).Error; err != nil {
+	err := database.DB.
+		Preload("Card").
+		Preload("Card.MonsterCard").
+		Preload("Card.SpellTrapCard").
+		Preload("Card.LinkMonsterCard").
+		Preload("Card.PendulumMonsterCard").
+		Where("user_id = ?", userID).
+		Find(&userCards).Error
+
+	if err != nil {
 		return nil, err
 	}
 
