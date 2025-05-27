@@ -61,7 +61,7 @@ func DeleteCardFromCollection(userID, cardID uint) error {
 func DeleteQuantityCardFromCollection(userID, cardID uint, quantityToRemove int) error {
 	var userCard models.UserCard
 
-	err := database.DB.Where("user_id= = AND card_id = ?", userID, cardID).First(&userCard).Error
+	err := database.DB.Where("user_id= ? AND card_id = ?", userID, cardID).First(&userCard).Error
 	if err != nil {
 		return fmt.Errorf("card not found in collection: %w", err)
 	}

@@ -42,8 +42,9 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	user.Password = ""
 	c.SetCookie("token", token, 3600, "/", "localhost", false, true)
-	c.JSON(http.StatusOK, gin.H{"message": "login successful"})
+	c.JSON(http.StatusOK, gin.H{"message": "login successful", "user": user})
 }
 
 func Register(c *gin.Context) {
