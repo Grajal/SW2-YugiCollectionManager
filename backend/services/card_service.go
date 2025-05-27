@@ -1,8 +1,10 @@
 package services
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/client"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
@@ -68,16 +70,19 @@ func BuildCardFromAPICard(apiCard *client.APICard, imageURL string) models.Card 
 			Type: apiCard.Type,
 		}
 	case apiCard.FrameType == "link":
+		linkMarkersJSON, err := json.Marshal(apiCard.LinkMarkers)
+		if err != nil {
+			log.Printf("Error marshaling link markers: %v", err)
+			break
+		}
+
 		card.LinkMonsterCard = &models.LinkMonsterCard{
 			LinkValue:   apiCard.LinkValue,
-			LinkMarkers: apiCard.LinkMarkers,
-		}
-		card.MonsterCard = &models.MonsterCard{
-			Atk:       apiCard.Atk,
-			Def:       0,
-			Level:     0,
-			Attribute: apiCard.Attribute,
-			Race:      apiCard.Race,
+			LinkMarkers: string(linkMarkersJSON),
+			Atk:         apiCard.Atk,
+			Level:       0,
+			Attribute:   apiCard.Attribute,
+			Race:        apiCard.Race,
 		}
 	case apiCard.FrameType == "pendulum":
 		card.PendulumMonsterCard = &models.PendulumMonsterCard{
