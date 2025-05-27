@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -81,6 +82,12 @@ func SearchCards(c *gin.Context) {
 	if len(cards) == 0 && name != "" {
 		fetchedCards, err := services.FetchAndStoreCardsByName(name)
 		if err != nil {
+			if strings.Contains(err.Error(), "invalid search term") {
+				// Catch internal error from YGOProDeckAPI with some bad request
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid card name format"})
+				return
+			}
+			log.Println("Error fetching from API:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch cards from external API"})
 			return
 		}

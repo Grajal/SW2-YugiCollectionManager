@@ -113,15 +113,19 @@ func FetchRandomCards(n int) ([]APICard, error) {
 // FetchCardsByName queries the YGOProDeck API for cards that match the given name (partial match).
 // It uses the 'fname' query parameter to perform fuzzy name search.
 func FetchCardsByName(name string) ([]APICard, error) {
-	url := fmt.Sprintf("https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=%s", url.QueryEscape(name))
+	url := fmt.Sprintf("https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=%s&num=10", url.QueryEscape(name))
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusBadRequest {
+		return nil, fmt.Errorf("invalid search term for YGOProDeck API (400)")
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API responded with status %d", resp.StatusCode)
+		return nil, fmt.Errorf("YGOProDeckAPI responded with status %d", resp.StatusCode)
 	}
 
 	var result struct {

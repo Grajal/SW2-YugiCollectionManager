@@ -239,6 +239,9 @@ func FetchAndStoreCardsByName(name string) ([]models.Card, error) {
 	if err != nil {
 		return nil, err
 	}
+	if apiCards == nil || len(apiCards) == 0 {
+		return nil, nil
+	}
 
 	var stored []models.Card
 	for _, apiCard := range apiCards {
