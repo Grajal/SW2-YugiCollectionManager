@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
@@ -41,10 +42,24 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
-
+  
 	user.Password = ""
-	c.SetCookie("token", token, 3600, "/", "localhost", false, true)
-	c.JSON(http.StatusOK, gin.H{"message": "login successful", "user": user})
+	domain := os.Getenv("COOKIE_DOMAIN")
+	if domain == "" {
+		domain = "localhost"
+	}
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "token",
+		Value:    token,
+		Path:     "/",
+		Domain:   domain,
+		MaxAge:   3600,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	})
+	c.JSON(http.StatusOK, gin.H{"message": "login successful"})
 }
 
 func Register(c *gin.Context) {
@@ -82,12 +97,18 @@ func Register(c *gin.Context) {
 }
 
 func GetCurrentUser(c *gin.Context) {
-	userIDRaw, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
+	userID, ok := c.MustGet("user_id").(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID"})
 		return
 	}
 
-	userID := userIDRaw.(uint)
-	c.JSON(http.StatusOK, gin.H{"user_id": userID})
+	var user models.User
+	if err := database.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
+		return
+	}
+
+	user.Password = ""
+	c.JSON(http.StatusOK, user)
 }

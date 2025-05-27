@@ -1,13 +1,14 @@
-name: Go
+name: YugiCollectionManager CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ['main']
   pull_request:
-    branches: [ "main" ]
+    branches: ['main']
 
 jobs:
-  build:
+  backend-check:
+    name: Backend Check
     runs-on: ubuntu-latest
 
     services:
@@ -25,49 +26,73 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    env:
-      PGHOST: localhost
-      PGPORT: 5432
-      PGUSER: test
-      PGPASSWORD: test
-      PGNAME: prueba_test
-      # Add other env vars your app expects, or map them as needed
-
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.24'
-        check-latest: true
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
 
-    - name: Install dependencies
-      run: go mod download
-      working-directory: backend
-
-    - name: Wait for Postgres
-      run: |
-        until pg_isready -h localhost -p 5432; do
-          echo "Waiting for database..."
-          sleep 2
-        done
-
-    - name: Test
-      run: go test -v ./...
-      working-directory: backend
-
-    - name: Build
-      run: go build -v ./...
-      working-directory: backend
-
-    - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v4
-      with:
-        version: latest
-        args: --timeout=5m
+      - name: Install dependencies
+        run: go mod download
         working-directory: backend
 
-    - name: Run go fmt
-      run: go fmt ./...
-      working-directory: backend
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -p 5432; do
+            echo "Waiting for database..."
+            sleep 2
+          done
+
+      - name: Run unit and integration tests
+        working-directory: backend
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: test
+          PGPASSWORD: test
+          PGDATABASE: prueba_test
+        run: go test -v ./...
+
+      - name: Build backend
+        run: go build -v ./...
+        working-directory: backend
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: latest
+          args: --timeout=5m
+          working-directory: backend
+
+      - name: Run go fmt
+        run: go fmt ./...
+        working-directory: backend
+
+  frontend-check:
+    name: Frontend Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install
+
+      - name: Lint code
+        working-directory: frontend
+        run: pnpm run lint
+
+      - name: Build frontend
+        working-directory: frontend
+        run: pnpm run build

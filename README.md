@@ -34,6 +34,7 @@ AWS_ACCESS_KEY_ID=your_key_aws
 AWS_SECRET_ACCESS_KEY=your_secret_key_aws
 AWS_REGION=your_region_aws
 AWS_BUCKET_NAME=your_bucket_name
+COOKIE_DOMAIN=localhost
 </pre>
 
 > ⚠️ If you use Railway or Render, you can set these variables in their dashboard. Locally you can set them in an `.env` or in the system environment. Make sure the bucket is created and has public object access enabled if you want to serve images directly from it.
