@@ -16,9 +16,6 @@ export default function CatalogPage() {
 
   const [cards, setCards] = useState<SearchResult[]>([])
   const [searchQuery, setSearchQuery] = useState<string>("")
-  const [archetypeQuery] = useState<string>("")
-  const [atkQuery] = useState<string>("")
-  const [defQuery] = useState<string>("")
   const [filters, setFilters] = useState<FilterOptions>({
     tipo: "",
     atributo: "",
@@ -58,29 +55,13 @@ export default function CatalogPage() {
   // Filtrar resultados basados en la búsqueda y filtros
   const filteredResults = cards.filter((card) => {
     const nameMatches =
-      !searchQuery || card.name.toLowerCase().includes(searchQuery.toLowerCase())
+      !searchQuery || card.Name.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const archetypeMatches =
-      !archetypeQuery || card.arquetipo?.toLowerCase().includes(archetypeQuery.toLowerCase())
-
-    const atkMatches =
-      !atkQuery || card.atk?.toString().includes(atkQuery)
-
-    const defMatches =
-      !defQuery || card.def?.toString().includes(defQuery)
-
-    const tipoMatches = !filters.tipo || card.tipo === filters.tipo
-    const atributoMatches = !filters.atributo || card.atributo === filters.atributo
-    const estrellasMatches = !filters.estrellas || card.estrellas === filters.estrellas
+    const tipoMatches = !filters.tipo || card.Type === filters.tipo
 
     return (
       nameMatches &&
-      archetypeMatches &&
-      tipoMatches &&
-      atributoMatches &&
-      estrellasMatches &&
-      atkMatches &&
-      defMatches
+      tipoMatches
     )
 
   })
