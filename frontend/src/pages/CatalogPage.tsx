@@ -34,7 +34,7 @@ export default function CatalogPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${API_URL}/cards`, {
+        const response = await fetch(`${API_URL}/cards/`, {
           credentials: 'include',
         })
 
@@ -42,10 +42,14 @@ export default function CatalogPage() {
           throw new Error('Failed to fetch cards')
         }
 
-        const cards = await response.json()
-        setCards(cards)
+        const fetchedData = await response.json()
+        console.log('Fetched data from API:', fetchedData)
+
+        setCards(fetchedData["Some cards"])
+
       } catch (error) {
         console.error('Error fetching cards:', error)
+        setCards([])
       }
     }
     fetchData()
@@ -60,10 +64,10 @@ export default function CatalogPage() {
       !archetypeQuery || card.arquetipo?.toLowerCase().includes(archetypeQuery.toLowerCase())
 
     const atkMatches =
-      !atkQuery || card.atk?.toString().includes
+      !atkQuery || card.atk?.toString().includes(atkQuery)
 
     const defMatches =
-      !defQuery || card.def?.toString() == defQuery
+      !defQuery || card.def?.toString().includes(defQuery)
 
     const tipoMatches = !filters.tipo || card.tipo === filters.tipo
     const atributoMatches = !filters.atributo || card.atributo === filters.atributo
@@ -82,9 +86,9 @@ export default function CatalogPage() {
   })
 
   // Calcular resultados para la página actual
-  // const indexOfLastResult = currentPage * resultsPerPage
-  // const indexOfFirstResult = indexOfLastResult - resultsPerPage
-  //const currentResults : SearchResult[] = filteredResults.slice(indexOfFirstResult, indexOfLastResult)
+  const indexOfLastResult = currentPage * resultsPerPage
+  const indexOfFirstResult = indexOfLastResult - resultsPerPage
+  const currentResults: SearchResult[] = filteredResults.slice(indexOfFirstResult, indexOfLastResult)
   const totalPages = Math.ceil(filteredResults.length / resultsPerPage)
 
   // const handleData = () => {
@@ -129,7 +133,7 @@ export default function CatalogPage() {
         <div id="results-section" className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Resultados ({filteredResults.length})</h2>
 
-          <ResultsGrid results={[]} onCardClick={handleCardClick} />
+          <ResultsGrid results={currentResults} onCardClick={handleCardClick} />
 
           {totalPages > 1 && (
             <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
