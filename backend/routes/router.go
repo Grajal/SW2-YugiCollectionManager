@@ -68,8 +68,9 @@ func SetupRouter() *gin.Engine {
 		decks := api.Group("/decks")
 		decks.Use(middleware.AuthMiddleware())
 		{
-			decks.POST("/", handlers.CreateDeck)
 			decks.GET("/", handlers.GetUserDecks)
+			decks.POST("/", handlers.CreateDeck)
+			decks.POST("/:deckId/export", handlers.ExportDeckHandler)
 			decks.GET("/:deckId/cards", handlers.GetCardByDeck)
 			decks.POST("/:deckId/cards", handlers.AddCardToDeck)
 			decks.DELETE("/:deckId", handlers.DeleteDeck)
