@@ -172,6 +172,9 @@ func RemoveCardFromDeck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Card removed from deck"})
 }
 
+// Allows you to export a deck in .ydk format for use in clients such as EDOPro.
+// according to their number in the deck. (card_ygo_id) of each card, repeated
+// according to their quantity in the deck.
 func ExportDeckHandler(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 	deckIDStr := c.Param("deckId")
