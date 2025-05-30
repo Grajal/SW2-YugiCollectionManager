@@ -52,6 +52,19 @@ func GetOrFetchCardByIDOrName(id int, name string) (*models.Card, error) {
 	return &newCard, nil
 }
 
+func GetCardByID(id uint) (*models.Card, error) {
+	var card models.Card
+	err := database.DB.Preload("MonsterCard").Preload("SpellTrapCard").Preload("LinkMonsterCard").Preload("PendulumMonsterCard").First(&card, "id = ?", id).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("card with ID %d not foun in internal database", id)
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to retrieve card from database: %w", err)
+	}
+
+	return &card, nil
+}
+
 // BuildCardFromAPICard constructs a models.Card object from a given APICard retrieved from the external API.
 // It maps the general card fields and dynamically assigns the appropriate substructure based on the card type.
 func BuildCardFromAPICard(apiCard *client.APICard, imageURL string) models.Card {

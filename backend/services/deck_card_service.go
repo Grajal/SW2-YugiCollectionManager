@@ -34,7 +34,7 @@ func AddCardToDeck(userID uint, deckID uint, cardID uint, quantity int) (*models
 		return nil, fmt.Errorf("deck not found or unauthorized: %w", err)
 	}
 
-	card, err := GetOrFetchCardByIDOrName(int(cardID), "")
+	card, err := GetCardByID(cardID)
 	if err != nil {
 		return nil, fmt.Errorf("card not found: %w", err)
 	}
