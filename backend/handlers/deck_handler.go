@@ -171,3 +171,22 @@ func RemoveCardFromDeck(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Card removed from deck"})
 }
+
+func ExportDeckHandler(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
+	deckIDStr := c.Param("deckId")
+	deckID, err := strconv.ParseUint(deckIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid deck ID"})
+		return
+	}
+
+	ydkContent, err := services.ExportDeckAsYDK(userID, uint(deckID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Header("Content-Disposition", "attachment; filename=deck.ydk")
+	c.Data(http.StatusOK, "text/plain", []byte(ydkContent))
+}

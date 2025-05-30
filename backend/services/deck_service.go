@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
@@ -96,4 +97,36 @@ func GetCardsByDeck(userID, deckID uint) ([]models.DeckCard, error) {
 	}
 
 	return deckCards, nil
+}
+
+func ExportDeckAsYDK(userID, deckID uint) (string, error) {
+	deck, err := getDeckByIDAndUserID(deckID, userID)
+	if err != nil {
+		return "", fmt.Errorf("deck not found or unauthorized: %w", err)
+	}
+
+	var cards []models.DeckCard
+	err = database.DB.Where("deck_id = ?", deck.ID).Preload("Card").Find(&cards).Error
+	if err != nil {
+		return "", fmt.Errorf("failed to load cards: %w", err)
+	}
+
+	var mainLines, extraLines, sideLines []string
+	for _, c := range cards {
+		for i := 0; i < c.Quantity; i++ {
+			line := fmt.Sprintf("%d", c.Card.CardYGOID)
+			switch c.Zone {
+			case "main":
+				mainLines = append(mainLines, line)
+			case "extra":
+				extraLines = append(extraLines, line)
+			case "side":
+				sideLines = append(sideLines, line)
+			}
+		}
+	}
+
+	result := "#main\n" + strings.Join(mainLines, "\n") + "\n#extra\n" + strings.Join(extraLines, "\n") + "\n#side\n" + strings.Join(sideLines, "\n")
+
+	return result, nil
 }
