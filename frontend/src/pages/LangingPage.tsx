@@ -1,9 +1,34 @@
 import { WalletCardsIcon as Cards } from "lucide-react"
 import { AuthModal } from "@/components/auth/AuthModal"
+//import { ResultsGrid } from "@/components/search/resultsGrid"
+//import { CardResult } from "@/components/search/resultsCard"
+//import Pagination from "@/components/search/resultsPagination"
+//import { useEffect, useState } from "react";
+
+const API_URL = import.meta.env.VITE_API_URL
 
 export default function LandingPage() {
+  //const [resultsCol, setResultsCol] = useState<string>("")
+
+  const fetchCollection = async() => {
+    try{
+      console.log(API_URL)
+      const response = await fetch(`${API_URL}/collections`,{
+        method: 'GET',
+      })
+      if(!response.ok){
+        throw new Error("Error al cargar los datos");
+      }
+      const data = await response.json();
+      console.log(data)
+    }catch(error){
+      console.error("HOLAAAAA")
+      console.error(error)
+    }
+  }
+
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col" onClick={fetchCollection}>
       <header className="w-full border-b bg-background/95 backdrop-blur">
         <div className="flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0 px-4">
           <div className="flex gap-2 items-center text-xl font-bold">

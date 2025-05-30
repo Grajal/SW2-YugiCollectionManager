@@ -20,11 +20,11 @@ export default function SearchPage() {
     estrellas: "",
   })
   // const [currentResults, setCurrentResults] = useState<SearchResult[]>()
-  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [currentPage, setCurrentPage] = useState<string>("First")
   const [selectedCard, setSelectedCard] = useState<SearchResult | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false)
 
-  const resultsPerPage = 50
+  //const resultsPerPage = 50
 
   const data: SearchResult[] = []
 
@@ -62,7 +62,7 @@ export default function SearchPage() {
   // const indexOfLastResult = currentPage * resultsPerPage
   // const indexOfFirstResult = indexOfLastResult - resultsPerPage
   //const currentResults : SearchResult[] = filteredResults.slice(indexOfFirstResult, indexOfLastResult)
-  const totalPages = Math.ceil(filteredResults.length / resultsPerPage)
+  //const totalPages = Math.ceil(filteredResults.length / resultsPerPage)
 
   // const handleData = () => {
 
@@ -70,12 +70,12 @@ export default function SearchPage() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
-    setCurrentPage(1) // Resetear a la primera página cuando se busca
+    setCurrentPage("First") // Resetear a la primera página cuando se busca
   }
 
   const handleFilterChange = (newFilters: FilterOptions) => {
     setFilters(newFilters)
-    setCurrentPage(1) // Resetear a la primera página cuando se cambian los filtros
+    setCurrentPage("First") // Resetear a la primera página cuando se cambian los filtros
   }
 
   const handleCardClick = (card: SearchResult) => {
@@ -83,7 +83,7 @@ export default function SearchPage() {
     setIsSidebarOpen(true)
   }
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = (page: string) => {
     setCurrentPage(page)
     // Scroll al inicio de los resultados
     window.scrollTo({
@@ -108,9 +108,8 @@ export default function SearchPage() {
 
           <ResultsGrid results={[]} onCardClick={handleCardClick} />
 
-          {totalPages > 1 && (
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-          )}
+          <Pagination page={currentPage} onPageChange={handlePageChange} />
+
         </div>
       </div>
 
