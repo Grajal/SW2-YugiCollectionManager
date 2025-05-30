@@ -1,7 +1,7 @@
 "use client"
 
 import { Header } from "@/components/landing/header"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import SearchBar from "@/components/search/searchBar"
 import { ResultsGrid } from "@/components/search/resultsGrid"
 import { Sidebar } from "@/components/search/sidebar"
@@ -9,10 +9,12 @@ import Pagination from "@/components/search/resultsPagination"
 import type { FilterOptions, SearchResult } from "@/types/search"
 import { useUser } from '@/contexts/UserContext'
 
+const API_URL = import.meta.env.VITE_API_URL
 
-export default function SearchPage() {
+export default function CatalogPage() {
   const { user } = useUser()
 
+  const [cards, setCards] = useState<SearchResult[]>([])
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [archetypeQuery] = useState<string>("")
   const [atkQuery] = useState<string>("")
@@ -29,10 +31,28 @@ export default function SearchPage() {
 
   const resultsPerPage = 50
 
-  const data: SearchResult[] = []
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${API_URL}/cards`, {
+          credentials: 'include',
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch cards')
+        }
+
+        const cards = await response.json()
+        setCards(cards)
+      } catch (error) {
+        console.error('Error fetching cards:', error)
+      }
+    }
+    fetchData()
+  }, [])
 
   // Filtrar resultados basados en la búsqueda y filtros
-  const filteredResults = data.filter((card) => {
+  const filteredResults = cards.filter((card) => {
     const nameMatches =
       !searchQuery || card.name.toLowerCase().includes(searchQuery.toLowerCase())
 
