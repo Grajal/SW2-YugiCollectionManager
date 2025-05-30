@@ -35,6 +35,9 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
+	// Clear password before sending response
+	user.Password = ""
+
 	c.JSON(http.StatusCreated, gin.H{"user": user})
 }
 
