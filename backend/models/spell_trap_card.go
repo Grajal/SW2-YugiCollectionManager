@@ -1,8 +1,9 @@
 package models
 
-type SpellTrapCard struct {
-	CardID uint `gorm:"primaryKey"`
-	Type   string
+import "gorm.io/gorm"
 
-	Card Card `gorm:"foreignKey:CardID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+type SpellTrapCard struct {
+	gorm.Model
+	CardID uint `gorm:"primaryKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Type   string
 }

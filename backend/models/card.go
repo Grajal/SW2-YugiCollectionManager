@@ -1,8 +1,10 @@
 package models
 
+import "gorm.io/gorm"
+
 type Card struct {
-	ID        uint `gorm:"primaryKey"`
-	CardYGOID int  `gorm:"unique;not null"`
+	gorm.Model
+	CardYGOID int `gorm:"unique;not null"`
 	Name      string
 	Desc      string
 	FrameType string

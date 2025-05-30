@@ -1,8 +1,10 @@
 package services
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/client"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
@@ -50,6 +52,19 @@ func GetOrFetchCardByIDOrName(id int, name string) (*models.Card, error) {
 	return &newCard, nil
 }
 
+func GetCardByID(id uint) (*models.Card, error) {
+	var card models.Card
+	err := database.DB.Preload("MonsterCard").Preload("SpellTrapCard").Preload("LinkMonsterCard").Preload("PendulumMonsterCard").First(&card, "id = ?", id).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("card with ID %d not foun in internal database", id)
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to retrieve card from database: %w", err)
+	}
+
+	return &card, nil
+}
+
 // BuildCardFromAPICard constructs a models.Card object from a given APICard retrieved from the external API.
 // It maps the general card fields and dynamically assigns the appropriate substructure based on the card type.
 func BuildCardFromAPICard(apiCard *client.APICard, imageURL string) models.Card {
@@ -68,16 +83,19 @@ func BuildCardFromAPICard(apiCard *client.APICard, imageURL string) models.Card 
 			Type: apiCard.Type,
 		}
 	case apiCard.FrameType == "link":
+		linkMarkersJSON, err := json.Marshal(apiCard.LinkMarkers)
+		if err != nil {
+			log.Printf("Error marshaling link markers: %v", err)
+			break
+		}
+
 		card.LinkMonsterCard = &models.LinkMonsterCard{
 			LinkValue:   apiCard.LinkValue,
-			LinkMarkers: apiCard.LinkMarkers,
-		}
-		card.MonsterCard = &models.MonsterCard{
-			Atk:       apiCard.Atk,
-			Def:       0,
-			Level:     0,
-			Attribute: apiCard.Attribute,
-			Race:      apiCard.Race,
+			LinkMarkers: string(linkMarkersJSON),
+			Atk:         apiCard.Atk,
+			Level:       0,
+			Attribute:   apiCard.Attribute,
+			Race:        apiCard.Race,
 		}
 	case apiCard.FrameType == "pendulum":
 		card.PendulumMonsterCard = &models.PendulumMonsterCard{
@@ -182,9 +200,9 @@ func EnsureMinimumCards(min int) error {
 	return nil
 }
 
-// GetCardsByFilters returns cards filtered by name, type, and archetype from the database.
+// GetCardsByFilters returns cards filtered by name, type, and frameType from the database.
 // If no cards match, it attempts to fetch new ones from the external API and save them.
-func GetFilteredCards(name, cardType, archetype string, limit, offset int) ([]models.Card, error) {
+func GetFilteredCards(name, cardType, frameType string, limit, offset int) ([]models.Card, error) {
 	db := database.DB.Model(&models.Card{}).
 		Preload("MonsterCard").
 		Preload("SpellTrapCard").
@@ -197,8 +215,8 @@ func GetFilteredCards(name, cardType, archetype string, limit, offset int) ([]mo
 	if cardType != "" {
 		db = db.Where("type = ?", cardType)
 	}
-	if archetype != "" {
-		db = db.Where("archetype = ?", archetype)
+	if frameType != "" {
+		db = db.Where("frame_type = ?", frameType)
 	}
 
 	var cards []models.Card
@@ -207,8 +225,8 @@ func GetFilteredCards(name, cardType, archetype string, limit, offset int) ([]mo
 }
 
 // CountFilteredCards returns the number of cards in the database that match the provided filters.
-// It supports filtering by name (case-insensitive, partial match), card type, and archetype.
-func CountFilteredCards(name, cardType, archetype string) (int64, error) {
+// It supports filtering by name (case-insensitive, partial match), card type, and frameType.
+func CountFilteredCards(name, cardType, frameType string) (int64, error) {
 	db := database.DB.Model(&models.Card{})
 
 	if name != "" {
@@ -217,8 +235,8 @@ func CountFilteredCards(name, cardType, archetype string) (int64, error) {
 	if cardType != "" {
 		db = db.Where("type = ?", cardType)
 	}
-	if archetype != "" {
-		db = db.Where("archetype = ?", archetype)
+	if frameType != "" {
+		db = db.Where("frame_type = ?", frameType)
 	}
 
 	var count int64
@@ -233,6 +251,9 @@ func FetchAndStoreCardsByName(name string) ([]models.Card, error) {
 	apiCards, err := client.FetchCardsByName(name)
 	if err != nil {
 		return nil, err
+	}
+	if len(apiCards) == 0 {
+		return nil, nil
 	}
 
 	var stored []models.Card

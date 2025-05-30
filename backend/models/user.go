@@ -7,11 +7,10 @@ import "gorm.io/gorm"
 // Contains basic user information and its relationships with collections and decks
 type User struct {
 	gorm.Model
-	ID       uint   `gorm:"primaryKey"`
 	Username string `gorm:"unique;not null"`
 	Email    string `gorm:"unique;not null"`
 	Password string // Hashed password
 
-	Collection []UserCard `gorm:"foreignKey:UserID"` // User's card collection
-	Decks      []Deck     `gorm:"foreignKey:UserID"` // User's card decks
+	Collection []UserCard `gorm:"primaryKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Decks      []Deck     `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 )
@@ -113,21 +114,30 @@ func FetchRandomCards(n int) ([]APICard, error) {
 // FetchCardsByName queries the YGOProDeck API for cards that match the given name (partial match).
 // It uses the 'fname' query parameter to perform fuzzy name search.
 func FetchCardsByName(name string) ([]APICard, error) {
-	url := fmt.Sprintf("https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=%s", url.QueryEscape(name))
+	// Usa ambos parámetros como exige la API: num y offset
+	url := fmt.Sprintf("https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=%s&num=10&offset=0", url.QueryEscape(name))
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
+	bodyBytes, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode == http.StatusBadRequest {
+		log.Printf("API returned 400: %s\n", string(bodyBytes))
+		return nil, fmt.Errorf("external API returned 400: %s", string(bodyBytes))
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API responded with status %d", resp.StatusCode)
+		log.Printf("API returned %d: %s\n", resp.StatusCode, string(bodyBytes))
+		return nil, fmt.Errorf("external API error %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	var result struct {
 		Data []APICard `json:"data"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	if err := json.Unmarshal(bodyBytes, &result); err != nil {
 		return nil, err
 	}
 

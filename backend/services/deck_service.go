@@ -55,7 +55,12 @@ func getDeckByIDAndUserID(deckID, userID uint) (*models.Deck, error) {
 
 func GetDecksByUserID(userID uint) ([]models.Deck, error) {
 	var decks []models.Deck
-	err := database.DB.Where("user_id = ?", userID).Find(&decks).Error
+	err := database.DB.Where("user_id = ?", userID).Preload("DeckCards").
+		Preload("DeckCards.Card").
+		Preload("DeckCards.Card.MonsterCard").
+		Preload("DeckCards.Card.SpellTrapCard").
+		Preload("DeckCards.Card.LinkMonsterCard").
+		Preload("DeckCards.Card.PendulumMonsterCard").Find(&decks).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch decks: %w", err)
 	}

@@ -65,7 +65,7 @@ func GetUserDecks(c *gin.Context) {
 
 func DeleteDeck(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
-	deckIDStr := c.Param("id")
+	deckIDStr := c.Param("deckId")
 
 	deckID, err := strconv.ParseUint(deckIDStr, 10, 64)
 	if err != nil {
