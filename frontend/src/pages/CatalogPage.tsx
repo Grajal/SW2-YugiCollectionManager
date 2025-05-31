@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/search/sidebar"
 import Pagination from "@/components/search/resultsPagination"
 import type { FilterOptions, SearchResult } from "@/types/search"
 import { useUser } from '@/contexts/UserContext'
+import { toast } from 'sonner'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -104,6 +105,41 @@ export default function CatalogPage() {
     setIsSidebarOpen(false)
   }
 
+  const handleAddToCollection = async (card: SearchResult) => {
+    if (!user || !user.ID) {
+      console.error("User not logged in or user ID is missing.")
+      return
+    }
+    if (!card || !card.ID) {
+      console.error("Card data is missing or card ID is missing.")
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/collections/`, { // Assuming this is the endpoint
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ card_id: card.ID, quantity: 1 })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to add card to collection')
+      }
+
+      console.log("Card added to collection:", card.Name)
+      toast.success(`Carta ${card.Name} añadida a la colección`)
+      closeSidebar()
+
+    } catch (error) {
+      console.error('Error adding card to collection:', error)
+      toast.error('Error añadiendo carta a la colección')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <Header username={user?.Username || ''} />
@@ -122,7 +158,7 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      <Sidebar card={selectedCard} isOpen={isSidebarOpen} onClose={closeSidebar} />
+      <Sidebar card={selectedCard} isOpen={isSidebarOpen} onClose={closeSidebar} onAddToCollection={handleAddToCollection} />
     </div>
   )
 }
