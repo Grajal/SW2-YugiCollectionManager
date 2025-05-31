@@ -1,9 +1,10 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import CatalogPage from './pages/CatalogPage'
+import CatalogPage from '@/pages/CatalogPage'
 import LandingPage from '@/pages/LangingPage'
 import { Toaster } from '@/components/ui/toaster'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { UserProvider } from '@/contexts/UserContext'
+import MyCollectionPage from '@/pages/MyCollectionPage'
 
 export default function App() {
   return (
@@ -14,6 +15,11 @@ export default function App() {
           <Route path="/cards" element={
             <ProtectedRoute>
               <CatalogPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/collection" element={
+            <ProtectedRoute>
+              <MyCollectionPage />
             </ProtectedRoute>
           } />
         </Routes>

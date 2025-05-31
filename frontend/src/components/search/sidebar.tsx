@@ -9,9 +9,10 @@ interface DetailsSidebarProps {
   card: SearchResult | null
   isOpen: boolean
   onClose: () => void
+  onAddToCollection: (card: SearchResult) => void
 }
 
-export const Sidebar: React.FC<DetailsSidebarProps> = ({ card, isOpen, onClose }) => {
+export const Sidebar: React.FC<DetailsSidebarProps> = ({ card, isOpen, onClose, onAddToCollection }) => {
   // Bloquear el scroll del body cuando el sidebar está abierto
   useEffect(() => {
     if (isOpen) {
@@ -92,6 +93,16 @@ export const Sidebar: React.FC<DetailsSidebarProps> = ({ card, isOpen, onClose }
             <div>
               <h4 className="text-sm font-medium text-gray-400">Descripción</h4>
               <p className="text-white text-sm mt-1">{card.Desc}</p>
+            </div>
+
+            {/* Add to Collection Button */}
+            <div className="mt-6">
+              <button
+                onClick={() => onAddToCollection(card)}
+                className="w-full cursor-pointer bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
+              >
+                Añadir a la Colección
+              </button>
             </div>
           </div>
         </div>
