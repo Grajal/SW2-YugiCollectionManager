@@ -1,9 +1,7 @@
 package models
 
-import "gorm.io/gorm"
-
 type Deck struct {
-	gorm.Model
+	ID          uint `gorm:"primaryKey"`
 	UserID      uint
 	Name        string `gorm:"not null"`
 	Description string
