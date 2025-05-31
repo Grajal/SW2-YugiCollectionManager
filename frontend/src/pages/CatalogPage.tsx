@@ -1,7 +1,7 @@
 "use client"
 
 import { Header } from "@/components/landing/header"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import SearchBar from "@/components/search/searchBar"
 import { ResultsGrid } from "@/components/search/resultsGrid"
 import { Sidebar } from "@/components/search/sidebar"
@@ -9,14 +9,13 @@ import Pagination from "@/components/search/resultsPagination"
 import type { FilterOptions, SearchResult } from "@/types/search"
 import { useUser } from '@/contexts/UserContext'
 
+const API_URL = import.meta.env.VITE_API_URL
 
-export default function SearchPage() {
+export default function CatalogPage() {
   const { user } = useUser()
 
+  const [cards, setCards] = useState<SearchResult[]>([])
   const [searchQuery, setSearchQuery] = useState<string>("")
-  const [archetypeQuery] = useState<string>("")
-  const [atkQuery] = useState<string>("")
-  const [defQuery] = useState<string>("")
   const [filters, setFilters] = useState<FilterOptions>({
     tipo: "",
     atributo: "",
@@ -29,42 +28,48 @@ export default function SearchPage() {
 
   const resultsPerPage = 50
 
-  const data: SearchResult[] = []
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${API_URL}/cards/`, {
+          credentials: 'include',
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch cards')
+        }
+
+        const fetchedData = await response.json()
+        console.log('Fetched data from API:', fetchedData)
+
+        setCards(fetchedData["Some cards"])
+
+      } catch (error) {
+        console.error('Error fetching cards:', error)
+        setCards([])
+      }
+    }
+    fetchData()
+  }, [])
 
   // Filtrar resultados basados en la búsqueda y filtros
-  const filteredResults = data.filter((card) => {
+  const filteredResults = cards.filter((card) => {
     const nameMatches =
-      !searchQuery || card.name.toLowerCase().includes(searchQuery.toLowerCase())
+      !searchQuery || card.Name.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const archetypeMatches =
-      !archetypeQuery || card.arquetipo?.toLowerCase().includes(archetypeQuery.toLowerCase())
-
-    const atkMatches =
-      !atkQuery || card.atk?.toString().includes
-
-    const defMatches =
-      !defQuery || card.def?.toString() == defQuery
-
-    const tipoMatches = !filters.tipo || card.tipo === filters.tipo
-    const atributoMatches = !filters.atributo || card.atributo === filters.atributo
-    const estrellasMatches = !filters.estrellas || card.estrellas === filters.estrellas
+    const tipoMatches = !filters.tipo || card.Type === filters.tipo
 
     return (
       nameMatches &&
-      archetypeMatches &&
-      tipoMatches &&
-      atributoMatches &&
-      estrellasMatches &&
-      atkMatches &&
-      defMatches
+      tipoMatches
     )
 
   })
 
   // Calcular resultados para la página actual
-  // const indexOfLastResult = currentPage * resultsPerPage
-  // const indexOfFirstResult = indexOfLastResult - resultsPerPage
-  //const currentResults : SearchResult[] = filteredResults.slice(indexOfFirstResult, indexOfLastResult)
+  const indexOfLastResult = currentPage * resultsPerPage
+  const indexOfFirstResult = indexOfLastResult - resultsPerPage
+  const currentResults: SearchResult[] = filteredResults.slice(indexOfFirstResult, indexOfLastResult)
   const totalPages = Math.ceil(filteredResults.length / resultsPerPage)
 
   // const handleData = () => {
@@ -109,7 +114,7 @@ export default function SearchPage() {
         <div id="results-section" className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Resultados ({filteredResults.length})</h2>
 
-          <ResultsGrid results={[]} onCardClick={handleCardClick} />
+          <ResultsGrid results={currentResults} onCardClick={handleCardClick} />
 
           {totalPages > 1 && (
             <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
