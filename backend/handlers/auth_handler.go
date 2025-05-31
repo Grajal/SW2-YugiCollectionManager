@@ -45,9 +45,6 @@ func Login(c *gin.Context) {
 
 	user.Password = ""
 	domain := os.Getenv("COOKIE_DOMAIN")
-	if domain == "" {
-		domain = "localhost"
-	}
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "token",
