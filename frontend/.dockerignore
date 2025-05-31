@@ -1,8 +1,1 @@
 node_modules
-dist
-pnpm-lock.yaml
-.env
-.DS_Store
-*.log
-.vscode
-*.local
