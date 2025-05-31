@@ -37,8 +37,8 @@ export function LoginForm() {
           throw new Error('Error al iniciar sesión. Por favor, inténtalo de nuevo.')
         }
       }
-
-      navigate('/cards')
+      navigate('/collection')
+      window.location.reload()
     } catch (error) {
       if (error instanceof Error) {
         setFormError(error.message)

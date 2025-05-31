@@ -20,7 +20,9 @@ export function AuthModal() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>Iniciar sesión</Button>
+        <a className="text-sm/6 font-semibold text-white">
+            Inicio Sesión
+          </a>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
