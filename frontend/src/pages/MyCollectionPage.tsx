@@ -99,11 +99,16 @@ export default function MyCollectionPage() {
               <p className="text-center text-gray-400">Your collection is empty. Add cards from the Catalog!</p>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-h-[70vh] overflow-y-auto pr-2">
-                {collection.map((card) => (
-                  <div key={card.ID} className="bg-gray-700 p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer hover:ring-2 hover:ring-purple-500"
-                    onClick={() => addCardToDeck(card.Card)} title={`Add ${card.Card.Name} to deck`}>
-                    <img src={card.Card.ImageURL} alt={card.Card.Name} className="w-full h-auto rounded" />
-                    <h3 className="text-xs font-semibold mt-1 truncate" title={card.Card.Name}>{card.Card.Name}</h3>
+                {collection.map((item) => (
+                  <div key={item.Card.ID} className="relative bg-gray-700 p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer hover:ring-2 hover:ring-purple-500"
+                    onClick={() => addCardToDeck(item.Card)} title={`Add ${item.Card.Name} to deck`}>
+                    <img src={item.Card.ImageURL} alt={item.Card.Name} className="w-full h-auto rounded" />
+                    <h3 className="text-xs font-semibold mt-1 truncate" title={item.Card.Name}>{item.Card.Name}</h3>
+                    {item.Quantity > 1 && (
+                      <div className="absolute top-0 right-0 bg-purple-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {item.Quantity}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

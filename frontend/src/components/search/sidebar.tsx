@@ -10,9 +10,11 @@ interface DetailsSidebarProps {
   isOpen: boolean
   onClose: () => void
   onAddToCollection: (card: SearchResult) => void
+  quantity: number
+  onQuantityChange: (quantity: number) => void
 }
 
-export const Sidebar: React.FC<DetailsSidebarProps> = ({ card, isOpen, onClose, onAddToCollection }) => {
+export const Sidebar: React.FC<DetailsSidebarProps> = ({ card, isOpen, onClose, onAddToCollection, quantity, onQuantityChange }) => {
   // Bloquear el scroll del body cuando el sidebar está abierto
   useEffect(() => {
     if (isOpen) {
@@ -97,6 +99,20 @@ export const Sidebar: React.FC<DetailsSidebarProps> = ({ card, isOpen, onClose, 
 
             {/* Add to Collection Button */}
             <div className="mt-6">
+              <div className="mb-4">
+                <label htmlFor="quantity" className="block text-sm font-medium text-gray-400 mb-1">
+                  Cantidad
+                </label>
+                <input
+                  type="number"
+                  id="quantity"
+                  name="quantity"
+                  min="1"
+                  value={quantity}
+                  onChange={(e) => onQuantityChange(parseInt(e.target.value, 10))}
+                  className="w-full px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
               <button
                 onClick={() => onAddToCollection(card)}
                 className="w-full cursor-pointer bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
