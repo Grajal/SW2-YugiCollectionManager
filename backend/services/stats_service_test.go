@@ -8,21 +8,23 @@ import (
 )
 
 func TestCountCardTypes(t *testing.T) {
-	userCards := []models.UserCard{
+	cards := []CardWithQuantity{
 		{Card: models.Card{Type: "Monster"}, Quantity: 3},
 		{Card: models.Card{Type: "Spell Card"}, Quantity: 2},
 		{Card: models.Card{Type: "Trap"}, Quantity: 1},
 	}
 
-	monsters, spells, traps := countCardTypes(userCards)
+	monsterCount := countCardTypes(cards, "monster")
+	spellCount := countCardTypes(cards, "spell")
+	trapCount := countCardTypes(cards, "trap")
 
-	assert.Equal(t, 3, monsters)
-	assert.Equal(t, 2, spells)
-	assert.Equal(t, 1, traps)
+	assert.Equal(t, 3, monsterCount)
+	assert.Equal(t, 2, spellCount)
+	assert.Equal(t, 1, trapCount)
 }
 
 func TestCountMonsterAttributes(t *testing.T) {
-	userCards := []models.UserCard{
+	cards := []CardWithQuantity{
 		{
 			Quantity: 2,
 			Card: models.Card{
@@ -39,14 +41,14 @@ func TestCountMonsterAttributes(t *testing.T) {
 		},
 	}
 
-	attrs := countMonsterAttributes(userCards)
+	attrs := countMonsterAttributes(cards)
 
 	assert.Equal(t, 2, attrs["DARK"])
 	assert.Equal(t, 1, attrs["LIGHT"])
 }
 
 func TestComputeAverageStats(t *testing.T) {
-	userCards := []models.UserCard{
+	cards := []CardWithQuantity{
 		{
 			Quantity: 2,
 			Card: models.Card{
@@ -63,7 +65,7 @@ func TestComputeAverageStats(t *testing.T) {
 		},
 	}
 
-	avg := computeAverageStats(userCards)
+	avg := computeAverageStats(cards)
 
 	assert.InEpsilon(t, 1666.6, avg.AvgATK, 0.1)
 	assert.InEpsilon(t, 1400.0, avg.AvgDEF, 0.1)
