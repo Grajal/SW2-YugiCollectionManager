@@ -23,67 +23,67 @@ const (
 	MaxCopiesPerCard = 3
 )
 
-func AddCardToDeck(userID uint, deckID uint, cardID uint, quantity int) (*models.DeckCard, error) {
-	if quantity <= 0 {
-		return nil, errors.New("quantity must be grater than 0")
-	}
+// func AddCardToDeck(userID uint, deckID uint, cardID uint, quantity int) (*models.DeckCard, error) {
+// 	if quantity <= 0 {
+// 		return nil, errors.New("quantity must be grater than 0")
+// 	}
 
-	deck, err := getDeckByIDAndUserID(deckID, userID)
-	if err != nil {
-		return nil, fmt.Errorf("deck not found or unauthorized: %w", err)
-	}
+// 	deck, err := getDeckByIDAndUserID(deckID, userID)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("deck not found or unauthorized: %w", err)
+// 	}
 
-	card, err := GetCardByID(cardID)
-	if err != nil {
-		return nil, fmt.Errorf("card not found: %w", err)
-	}
+// 	card, err := GetCardByID(cardID)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("card not found: %w", err)
+// 	}
 
-	zone := GetZoneFromCard(card)
+// 	zone := GetZoneFromCard(card)
 
-	if err := ValidateDeckCardCount(deck.ID, zone, quantity); err != nil {
-		return nil, err
-	}
+// 	if err := ValidateDeckCardCount(deck.ID, zone, quantity); err != nil {
+// 		return nil, err
+// 	}
 
-	if err := ValidateCardCopyLimit(deck.ID, card.ID, quantity); err != nil {
-		return nil, err
-	}
+// 	if err := ValidateCardCopyLimit(deck.ID, card.ID, quantity); err != nil {
+// 		return nil, err
+// 	}
 
-	var existing models.DeckCard
-	err = database.DB.Preload("Card").
-		Preload("Card.MonsterCard").
-		Preload("Card.SpellTrapCard").
-		Preload("Card.LinkMonsterCard").
-		Preload("Card.PendulumMonsterCard").Where("deck_id = ? AND card_id = ?", deck.ID, card.ID).First(&existing).Error
+// 	var existing models.DeckCard
+// 	err = database.DB.Preload("Card").
+// 		Preload("Card.MonsterCard").
+// 		Preload("Card.SpellTrapCard").
+// 		Preload("Card.LinkMonsterCard").
+// 		Preload("Card.PendulumMonsterCard").Where("deck_id = ? AND card_id = ?", deck.ID, card.ID).First(&existing).Error
 
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("failed to query card: %w", err)
-	}
+// 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+// 		return nil, fmt.Errorf("failed to query card: %w", err)
+// 	}
 
-	if existing.DeckID != 0 && existing.CardID != 0 {
-		existing.Quantity += quantity
-		if err := database.DB.Save(&existing).Error; err != nil {
-			return nil, fmt.Errorf("failed to update card quantity: %w", err)
-		}
-		return &existing, nil
-	}
+// 	if existing.DeckID != 0 && existing.CardID != 0 {
+// 		existing.Quantity += quantity
+// 		if err := database.DB.Save(&existing).Error; err != nil {
+// 			return nil, fmt.Errorf("failed to update card quantity: %w", err)
+// 		}
+// 		return &existing, nil
+// 	}
 
-	newEntry := models.DeckCard{
-		DeckID:   deckID,
-		CardID:   card.ID,
-		Quantity: quantity,
-		Zone:     zone,
-	}
+// 	newEntry := models.DeckCard{
+// 		DeckID:   deckID,
+// 		CardID:   card.ID,
+// 		Quantity: quantity,
+// 		Zone:     zone,
+// 	}
 
-	if err := database.DB.Preload("Card").
-		Preload("Card.MonsterCard").
-		Preload("Card.SpellTrapCard").
-		Preload("Card.LinkMonsterCard").
-		Preload("Card.PendulumMonsterCard").Create(&newEntry).Error; err != nil {
-		return nil, fmt.Errorf("failed to add card to deck: %w", err)
-	}
+// 	if err := database.DB.Preload("Card").
+// 		Preload("Card.MonsterCard").
+// 		Preload("Card.SpellTrapCard").
+// 		Preload("Card.LinkMonsterCard").
+// 		Preload("Card.PendulumMonsterCard").Create(&newEntry).Error; err != nil {
+// 		return nil, fmt.Errorf("failed to add card to deck: %w", err)
+// 	}
 
-	return &newEntry, nil
-}
+// 	return &newEntry, nil
+// }
 
 func GetZoneFromCard(card *models.Card) string {
 	switch card.FrameType {
