@@ -50,4 +50,4 @@ This will lift:
 * Backend (yugi_backend)
 * Frontend (yugi_frontend)
 
-The backend will be available at http://localhost:8080 and the frontend at http://localhost:3000.
+The backend will be available at http://localhost:8080 and the frontend at http://localhost:5173.
