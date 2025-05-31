@@ -99,7 +99,7 @@ export const Sidebar: React.FC<DetailsSidebarProps> = ({ card, isOpen, onClose, 
             <div className="mt-6">
               <button
                 onClick={() => onAddToCollection(card)}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
+                className="w-full cursor-pointer bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
               >
                 Añadir a la Colección
               </button>
