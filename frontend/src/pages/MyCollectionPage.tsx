@@ -2,19 +2,13 @@ import { Header } from "@/components/landing/header"
 import { useState, useEffect } from "react"
 import { useUser } from '@/contexts/UserContext'
 import type { SearchResult } from "@/types/search"
+import type { Deck, Collection } from "@/types/collection"
 
 const API_URL = import.meta.env.VITE_API_URL
 
-interface Deck {
-  ID: number
-  UserID: number
-  Name: string
-  DeckCards: SearchResult[]
-}
-
 export default function MyCollectionPage() {
   const { user } = useUser()
-  const [collection, setCollection] = useState<SearchResult[]>([])
+  const [collection, setCollection] = useState<Collection>([])
   const [decks, setDecks] = useState<Deck[]>([])
   const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
@@ -34,7 +28,7 @@ export default function MyCollectionPage() {
             throw new Error('Failed to fetch collection')
           }
           const collectionData = await collectionResponse.json()
-          setCollection(collectionData.cards || [])
+          setCollection(collectionData.collection || [])
 
           const decksResponse = await fetch(`${API_URL}/decks/`, {
             credentials: 'include',
@@ -43,7 +37,7 @@ export default function MyCollectionPage() {
             throw new Error('Failed to fetch decks')
           }
           const decksData = await decksResponse.json()
-          setDecks(decksData.decks || [])
+          setDecks(decksData)
 
         } catch (err) {
           console.error('Error fetching data:', err)
@@ -62,107 +56,18 @@ export default function MyCollectionPage() {
   }, [user])
 
   const handleCreateDeck = async () => {
-    if (!user || !user.ID || !newDeckName.trim()) {
-      alert("Please enter a deck name.")
-      return
-    }
-    try {
-      const response = await fetch(`${API_URL}/decks/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ userId: user.ID, name: newDeckName, description: "" })
-      })
-      if (!response.ok) {
-        throw new Error('Failed to create deck')
-      }
-      const createdDeck = await response.json()
-      setDecks([...decks, createdDeck.deck])
-      setNewDeckName("")
-      setSelectedDeck(createdDeck.deck)
-      alert("Deck created successfully!")
-    } catch (err) {
-      console.error('Error creating deck:', err)
-      alert(`Error creating deck: ${err instanceof Error ? err.message : 'Unknown error'}`)
-    }
+    // TODO: Implement handleCreateDeck function
+    console.log('TODO: Implement handleCreateDeck function')
   }
 
   const addCardToDeck = async (card: SearchResult) => {
-    if (!selectedDeck) {
-      alert("Please select a deck first.")
-      return
-    }
-    if (!user || !user.ID) {
-      alert("User not identified. Please log in again.")
-      return
-    }
-
-    const updatedDeck = { ...selectedDeck, Cards: [...selectedDeck.DeckCards, card] }
-    setSelectedDeck(updatedDeck)
-
-    try {
-      const response = await fetch(`${API_URL}/decks/${selectedDeck.ID}/cards`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ cardId: card.ID })
-      })
-
-      if (!response.ok) {
-        setSelectedDeck(selectedDeck)
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || 'Failed to add card to deck')
-      }
-      console.log(`Card ${card.Name} added to deck ${selectedDeck.Name} on server`)
-    } catch (err) {
-      setSelectedDeck(selectedDeck)
-      console.error('Error adding card to deck:', err)
-      alert(`Error adding card to deck: ${err instanceof Error ? err.message : 'Unknown error'}`)
-    }
+    // TODO: Implement addCardToDeck function
+    console.log(card)
   }
 
   const removeCardFromDeck = async (cardIndex: number) => {
-    if (!selectedDeck || !selectedDeck.DeckCards[cardIndex]) {
-      alert("Invalid card or deck state.")
-      return
-    }
-    if (!user || !user.ID) {
-      alert("User not identified. Please log in again.")
-      return
-    }
-
-    const cardToRemove = selectedDeck.DeckCards[cardIndex]
-    const originalCards = [...selectedDeck.DeckCards]
-
-    const updatedCards = selectedDeck.DeckCards.filter((_, index) => index !== cardIndex)
-    const updatedDeck = { ...selectedDeck, Cards: updatedCards }
-    setSelectedDeck(updatedDeck)
-
-    try {
-      const response = await fetch(`${API_URL}/decks/${selectedDeck.ID}/cards/${cardToRemove.ID}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        setSelectedDeck({ ...selectedDeck, DeckCards: originalCards })
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || 'Failed to remove card from deck')
-      }
-
-      console.log(`Card ${cardToRemove.Name} removed from deck ${selectedDeck.Name} on server`)
-    } catch (err) {
-      setSelectedDeck({ ...selectedDeck, DeckCards: originalCards })
-      console.error('Error removing card from deck:', err)
-      alert(`Error removing card from deck: ${err instanceof Error ? err.message : 'Unknown error'}`)
-    }
+    // TODO: Implement removeCardFromDeck function
+    console.log(cardIndex)
   }
 
   if (loading) {
@@ -201,9 +106,9 @@ export default function MyCollectionPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-h-[70vh] overflow-y-auto pr-2">
                 {collection.map((card) => (
                   <div key={card.ID} className="bg-gray-700 p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer hover:ring-2 hover:ring-purple-500"
-                    onClick={() => addCardToDeck(card)} title={`Add ${card.Name} to deck`}>
-                    <img src={card.ImageURL} alt={card.Name} className="w-full h-auto rounded" />
-                    <h3 className="text-xs font-semibold mt-1 truncate" title={card.Name}>{card.Name}</h3>
+                    onClick={() => addCardToDeck(card.Card)} title={`Add ${card.Card.Name} to deck`}>
+                    <img src={card.Card.ImageURL} alt={card.Card.Name} className="w-full h-auto rounded" />
+                    <h3 className="text-xs font-semibold mt-1 truncate" title={card.Card.Name}>{card.Card.Name}</h3>
                   </div>
                 ))}
               </div>
@@ -223,7 +128,7 @@ export default function MyCollectionPage() {
               />
               <button
                 onClick={handleCreateDeck}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150"
+                className="w-full bg-purple-600 cursor-pointer purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150"
               >
                 Crear nuevo mazo
               </button>
@@ -237,7 +142,7 @@ export default function MyCollectionPage() {
                   <button
                     key={deck.ID}
                     onClick={() => setSelectedDeck(deck)}
-                    className={`w-full text-left p-3 mb-2 rounded-lg transition-colors ${selectedDeck?.ID === deck.ID ? 'bg-purple-700 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
+                    className={`w - full text - left p - 3 mb - 2 rounded - lg transition - colors ${selectedDeck?.ID === deck.ID ? 'bg-purple-700 text-white' : 'bg-gray-700 hover:bg-gray-600'} `}
                   >
                     {deck.Name}
                   </button>
@@ -253,7 +158,7 @@ export default function MyCollectionPage() {
                 ) : (
                   <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
                     {selectedDeck.DeckCards.map((card, index) => (
-                      <div key={`${card.ID}-${index}`} className="flex items-center justify-between bg-gray-700 p-2 rounded-lg">
+                      <div key={`${card.ID} -${index} `} className="flex items-center justify-between bg-gray-700 p-2 rounded-lg">
                         <span className="text-sm truncate" title={card.Name}>{card.Name}</span>
                         <button onClick={() => removeCardFromDeck(index)} className="text-red-400 hover:text-red-300 text-xs">Eliminar</button>
                       </div>
