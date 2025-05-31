@@ -26,6 +26,7 @@ export default function CatalogPage() {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [selectedCard, setSelectedCard] = useState<SearchResult | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false)
+  const [quantity, setQuantity] = useState<number>(1)
 
   const resultsPerPage = 50
 
@@ -103,9 +104,10 @@ export default function CatalogPage() {
 
   const closeSidebar = () => {
     setIsSidebarOpen(false)
+    setQuantity(1)
   }
 
-  const handleAddToCollection = async (card: SearchResult) => {
+  const handleAddToCollection = async (card: SearchResult, count: number) => {
     if (!user || !user.ID) {
       console.error("User not logged in or user ID is missing.")
       return
@@ -116,13 +118,13 @@ export default function CatalogPage() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/collections/`, { // Assuming this is the endpoint
+      const response = await fetch(`${API_URL}/collections/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ card_id: card.ID, quantity: 1 })
+        body: JSON.stringify({ card_id: card.ID, quantity: count })
       })
 
       if (!response.ok) {
@@ -158,7 +160,14 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      <Sidebar card={selectedCard} isOpen={isSidebarOpen} onClose={closeSidebar} onAddToCollection={handleAddToCollection} />
+      <Sidebar
+        card={selectedCard}
+        isOpen={isSidebarOpen}
+        onClose={closeSidebar}
+        onAddToCollection={(card) => handleAddToCollection(card, quantity)}
+        quantity={quantity}
+        onQuantityChange={setQuantity}
+      />
     </div>
   )
 }
