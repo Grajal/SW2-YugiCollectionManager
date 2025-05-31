@@ -1,8 +1,9 @@
 import { Header } from "@/components/landing/header"
 import { useState, useEffect } from "react"
 import { useUser } from '@/contexts/UserContext'
-import type { Deck, Collection, CollectionItem } from "@/types/collection"
+import type { Deck, Collection } from "@/types/collection"
 import { ManageCardModal } from "@/components/collection/ManageCardModal"
+import { useCollectionManagement } from "@/hooks/useCollectionManagement"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -14,9 +15,17 @@ export default function MyCollectionPage() {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [newDeckName, setNewDeckName] = useState<string>("")
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
-  const [selectedCard, setSelectedCard] = useState<CollectionItem | null>(null)
-  const [selectedCardQuantity, setSelectedCardQuantity] = useState<number>(1)
+
+  const {
+    isModalOpen,
+    selectedCard,
+    selectedCardQuantity,
+    setIsModalOpen,
+    setSelectedCardQuantity,
+    handleOpenCardModal,
+    handleDeleteCard,
+    handleUpdateCardQuantity,
+  } = useCollectionManagement({ setCollection, setError })
 
   useEffect(() => {
     if (user && user.ID) {
@@ -55,8 +64,10 @@ export default function MyCollectionPage() {
     } else if (!user) {
       setLoading(false)
       setError("Por favor, inicia sesión para ver tu colección y mazos.")
+      setCollection([])
+      setDecks([])
     }
-  }, [user])
+  }, [user, setError, setCollection])
 
   const handleCreateDeck = async () => {
     console.log('TODO: Implement handleCreateDeck function')
@@ -64,26 +75,6 @@ export default function MyCollectionPage() {
 
   const removeCardFromDeck = async (cardIndex: number) => {
     console.log(cardIndex)
-  }
-
-  const handleOpenCardModal = (item: CollectionItem) => {
-    setSelectedCard(item)
-    setSelectedCardQuantity(item.Quantity)
-    setIsModalOpen(true)
-  }
-
-  const handleDeleteCard = async () => {
-    if (!selectedCard) return
-    console.log("Deleting card:", selectedCard.Card.Name)
-    setIsModalOpen(false)
-    setSelectedCard(null)
-  }
-
-  const handleUpdateCardQuantity = async () => {
-    if (!selectedCard || selectedCardQuantity <= 0) return
-    console.log("Updating quantity for:", selectedCard.Card.Name, "to", selectedCardQuantity)
-    setIsModalOpen(false)
-    setSelectedCard(null)
   }
 
   if (loading) {
