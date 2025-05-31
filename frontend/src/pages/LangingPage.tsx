@@ -1,13 +1,32 @@
 import { WalletCardsIcon as Cards } from "lucide-react"
 import { AuthModal } from "@/components/auth/AuthModal"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function LandingPage() {
+
+  const fetchCollection = async() => {
+    try{
+      const response = await fetch(`${API_URL}/cards/`,{
+        method: 'GET',
+        credentials: 'include',
+      })
+      if(!response.ok){
+        throw new Error("Error al cargar los datos");
+      }
+      const data = await response.json();
+      console.log(data)
+    }catch(error){
+      console.error(error)
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="w-full border-b bg-background/95 backdrop-blur">
         <div className="flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0 px-4">
           <div className="flex gap-2 items-center text-xl font-bold">
-            <Cards className="h-6 w-6 text-purple-600" />
+            <Cards className="h-6 w-6 text-purple-600" onClick={fetchCollection}/>
             <span>YuGiDeck</span>
           </div>
           <div className="flex flex-1 items-center justify-end space-x-4">
