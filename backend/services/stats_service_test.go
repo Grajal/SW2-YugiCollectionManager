@@ -14,11 +14,13 @@ func TestCountCardTypes(t *testing.T) {
 		{Card: models.Card{Type: "Trap"}, Quantity: 1},
 	}
 
-	monsters, spells, traps := countCardTypes(cards)
+	monsterCount := countCardTypes(cards, "monster")
+	spellCount := countCardTypes(cards, "spell")
+	trapCount := countCardTypes(cards, "trap")
 
-	assert.Equal(t, 3, monsters)
-	assert.Equal(t, 2, spells)
-	assert.Equal(t, 1, traps)
+	assert.Equal(t, 3, monsterCount)
+	assert.Equal(t, 2, spellCount)
+	assert.Equal(t, 1, trapCount)
 }
 
 func TestCountMonsterAttributes(t *testing.T) {
