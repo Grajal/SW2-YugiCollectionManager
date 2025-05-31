@@ -109,3 +109,15 @@ func DeleteQuantityCardsFromCollcetion(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Card quantity updated or removed succesfully"})
 }
+
+func GetCollectionStats(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
+
+	stats, err := services.CalculateCollectionStats(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not calculate stats"})
+		return
+	}
+
+	c.JSON(http.StatusOK, stats)
+}
