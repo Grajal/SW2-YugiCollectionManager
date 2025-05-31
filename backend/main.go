@@ -3,27 +3,63 @@ package main
 
 import (
 	"os"
+	"strings"
+	"time"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/handlers"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/repository"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/routes"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/services"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
-// port is the server port, defaults to 8080 if not set in environment
-var port = os.Getenv("PORT")
-
 func main() {
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
 	database.DBConnect()
 
-	if err := database.DB.AutoMigrate(models.User{}, models.Card{}, models.SpellTrapCard{}, models.MonsterCard{}, models.LinkMonsterCard{}, models.PendulumMonsterCard{}, models.UserCard{}, models.Deck{}, models.DeckCard{}); err != nil {
+	if err := database.DB.AutoMigrate(
+		models.User{},
+		models.Card{},
+		models.SpellTrapCard{},
+		models.MonsterCard{},
+		models.LinkMonsterCard{},
+		models.PendulumMonsterCard{},
+		models.UserCard{},
+		models.Deck{},
+		models.DeckCard{},
+	); err != nil {
 		panic("Failed to migrate database: " + err.Error())
 	}
 
-	router := routes.SetupRouter()
+	cardRepo := repository.NewCardRepository()
+	cardFactory := services.NewCardFactory()
+	cardService := services.NewCardService(cardRepo, cardFactory)
+	cardHandler := handlers.NewCardHandler(cardService)
+
+	router := gin.Default()
+	allowedOrigins := "http://localhost:5173,https://sw-2-yugi-collection-manager.vercel.app"
+
+	origins := strings.Split(allowedOrigins, ",")
+
+	config := cors.Config{
+		AllowOrigins:     origins,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}
+	router.Use(cors.New(config))
+
+	api := router.Group("/api")
+	routes.RegisterCardRoutes(api, cardHandler)
 
 	if err := router.Run(":" + port); err != nil {
 		panic("Failed to start server: " + err.Error())

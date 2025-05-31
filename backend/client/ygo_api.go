@@ -41,6 +41,8 @@ type CardResponse struct {
 
 const MaxFetch = 10
 
+var ErrBadRequestFromAPI = errors.New("external API returned 400 Bad Request")
+
 func FetchCardByIDOrName(id int, name string) (*APICard, error) {
 	var endpoint string
 	if id > 0 {
@@ -126,7 +128,7 @@ func FetchCardsByName(name string) ([]APICard, error) {
 
 	if resp.StatusCode == http.StatusBadRequest {
 		log.Printf("API returned 400: %s\n", string(bodyBytes))
-		return nil, fmt.Errorf("external API returned 400: %s", string(bodyBytes))
+		return nil, ErrBadRequestFromAPI
 	}
 
 	if resp.StatusCode != http.StatusOK {
