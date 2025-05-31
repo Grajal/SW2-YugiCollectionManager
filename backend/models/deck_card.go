@@ -1,13 +1,10 @@
 package models
 
-import "gorm.io/gorm"
-
 type DeckCard struct {
-	gorm.Model
-	DeckID   uint
-	CardID   uint
+	DeckID   uint   `gorm:"primaryKey"`
+	CardID   uint   `gorm:"primaryKey"`
 	Quantity int    `gorm:"not null"`
 	Zone     string `gorm:"type:varchar(10);not null"`
 
-	Card Card `gorm:"foreignKey:CardID"`
+	Card Card `gorm:"foreignKey:CardID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }

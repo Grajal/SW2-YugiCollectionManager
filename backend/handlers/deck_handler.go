@@ -193,3 +193,28 @@ func ExportDeckHandler(c *gin.Context) {
 	c.Header("Content-Disposition", "attachment; filename=deck.ydk")
 	c.Data(http.StatusOK, "text/plain", []byte(ydkContent))
 }
+
+func ImportDeckHandler(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
+
+	deckIDParam := c.Param("deckId")
+	deckID, err := strconv.ParseUint(deckIDParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid deck ID"})
+		return
+	}
+
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read file"})
+		return
+	}
+
+	err = services.ImportDeckFromYDK(userID, uint(deckID), file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to import deck: %v", err)})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}

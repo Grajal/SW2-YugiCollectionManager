@@ -3,10 +3,13 @@ package services
 import (
 	"errors"
 	"fmt"
+	"mime/multipart"
+	"strconv"
 	"strings"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/utils"
 	"gorm.io/gorm"
 )
 
@@ -129,4 +132,43 @@ func ExportDeckAsYDK(userID, deckID uint) (string, error) {
 	result := "#main\n" + strings.Join(mainLines, "\n") + "\n#extra\n" + strings.Join(extraLines, "\n") + "\n#side\n" + strings.Join(sideLines, "\n")
 
 	return result, nil
+}
+
+func ImportDeckFromYDK(userID, deckID uint, file multipart.File) error {
+	mainIDs, extraIDs, sideIDs, err := utils.ParseYDK(file)
+	if err != nil {
+		return fmt.Errorf("error parsing YDK file: %w", err)
+	}
+
+	process := func(ids []string) error {
+		for _, idStr := range ids {
+			id, err := strconv.Atoi(idStr)
+			if err != nil {
+				return fmt.Errorf("invalid card ID %s: %w", idStr, err)
+			}
+
+			card, err := GetOrFetchCardByIDOrName(id, "")
+			if err != nil {
+				return fmt.Errorf("error resolving card %d: %w", id, err)
+			}
+
+			_, err = AddCardToDeck(userID, deckID, card.ID, 1)
+			if err != nil {
+				return fmt.Errorf("error adding card %d to deck: %w", card.ID, err)
+			}
+		}
+		return nil
+	}
+
+	if err := process(mainIDs); err != nil {
+		return fmt.Errorf("error processing main cards: %w", err)
+	}
+	if err := process(extraIDs); err != nil {
+		return fmt.Errorf("error processing extra cards: %w", err)
+	}
+	if err := process(sideIDs); err != nil {
+		return fmt.Errorf("error processing side cards: %w", err)
+	}
+
+	return nil
 }

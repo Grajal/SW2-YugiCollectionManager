@@ -49,13 +49,17 @@ func AddCardToDeck(userID uint, deckID uint, cardID uint, quantity int) (*models
 	}
 
 	var existing models.DeckCard
-	err = database.DB.Where("deck_id = ? AND card_id = ?", deck.ID, card.ID).First(&existing).Error
+	err = database.DB.Preload("Card").
+		Preload("Card.MonsterCard").
+		Preload("Card.SpellTrapCard").
+		Preload("Card.LinkMonsterCard").
+		Preload("Card.PendulumMonsterCard").Where("deck_id = ? AND card_id = ?", deck.ID, card.ID).First(&existing).Error
 
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, fmt.Errorf("failed to query card: %w", err)
 	}
 
-	if existing.ID != 0 {
+	if existing.DeckID != 0 && existing.CardID != 0 {
 		existing.Quantity += quantity
 		if err := database.DB.Save(&existing).Error; err != nil {
 			return nil, fmt.Errorf("failed to update card quantity: %w", err)
@@ -70,7 +74,11 @@ func AddCardToDeck(userID uint, deckID uint, cardID uint, quantity int) (*models
 		Zone:     zone,
 	}
 
-	if err := database.DB.Create(&newEntry).Error; err != nil {
+	if err := database.DB.Preload("Card").
+		Preload("Card.MonsterCard").
+		Preload("Card.SpellTrapCard").
+		Preload("Card.LinkMonsterCard").
+		Preload("Card.PendulumMonsterCard").Create(&newEntry).Error; err != nil {
 		return nil, fmt.Errorf("failed to add card to deck: %w", err)
 	}
 
@@ -144,7 +152,7 @@ func ValidateCardCopyLimit(deckID, cardID uint, quantityToAdd int) error {
 	}
 
 	existingQty := 0
-	if existing.ID != 0 {
+	if existing.DeckID != 0 && existing.CardID != 0 {
 		existingQty = existing.Quantity
 	}
 
