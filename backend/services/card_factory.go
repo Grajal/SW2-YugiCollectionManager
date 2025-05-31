@@ -8,6 +8,7 @@ import (
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
 )
 
+// CardFactory defines the interface for creating Card model instances from API card data.
 type CardFactory interface {
 	BuildCardFromAPI(apiCard *client.APICard, imageURL string) *models.Card
 }
@@ -18,6 +19,9 @@ func NewCardFactory() CardFactory {
 	return &cardFactory{}
 }
 
+// BuildCardFromAPI creates a models.Card from the given APICard data and image URL.
+// Depending on the type or frameType, it also creates and attaches the appropriate card subtype:
+// SpellTrapCard, LinkMonsterCard, PendulumMonsterCard, or MonsterCard.
 func (f *cardFactory) BuildCardFromAPI(apiCard *client.APICard, imageURL string) *models.Card {
 	card := models.Card{
 		CardYGOID: apiCard.ID,
@@ -42,6 +46,7 @@ func (f *cardFactory) BuildCardFromAPI(apiCard *client.APICard, imageURL string)
 	return &card
 }
 
+// buildMonster creates a basic MonsterCard using ATK, DEF, Level, Attribute, and Race from the API.
 func (f *cardFactory) buildMonster(api *client.APICard) *models.MonsterCard {
 	return &models.MonsterCard{
 		Atk:       api.Atk,
@@ -52,12 +57,15 @@ func (f *cardFactory) buildMonster(api *client.APICard) *models.MonsterCard {
 	}
 }
 
+// buildSpellTrap creates a SpellTrapCard using the card type (Spell or Trap) from the API.
 func (f *cardFactory) buildSpellTrap(api *client.APICard) *models.SpellTrapCard {
 	return &models.SpellTrapCard{
 		Type: api.Type,
 	}
 }
 
+// buildLink creates a LinkMonsterCard with LinkValue, LinkMarkers (as JSON string), ATK, Attribute, and Race.
+// Level is always set to 0 for Link monsters.
 func (f *cardFactory) buildLink(api *client.APICard) *models.LinkMonsterCard {
 	linkMarkersJSON, err := json.Marshal(api.LinkMarkers)
 	if err != nil {
@@ -74,6 +82,7 @@ func (f *cardFactory) buildLink(api *client.APICard) *models.LinkMonsterCard {
 	}
 }
 
+// buildPendulum creates a PendulumMonsterCard with ATK, DEF, Level, Attribute, and Scale from the API.
 func (f *cardFactory) buildPendulum(api *client.APICard) *models.PendulumMonsterCard {
 	return &models.PendulumMonsterCard{
 		Atk:       api.Atk,
