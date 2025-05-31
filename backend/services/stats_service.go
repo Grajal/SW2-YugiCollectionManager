@@ -11,12 +11,13 @@ type AvgStats struct {
 	AvgDEF float64 `json:"avg_def"`
 }
 
-type CollectionStats struct {
+type Stats struct {
 	MonsterCount int            `json:"monster"`
 	SpellCount   int            `json:"spell"`
 	TrapCount    int            `json:"trap"`
 	Attributes   map[string]int `json:"attributes"`
 	AverageStats AvgStats       `json:"average_stats"`
+	TotalCards   int            `json:"total_cards"`
 }
 
 // CardWithQuantity is a generic wrapper for any card + quantity structure,
@@ -28,19 +29,21 @@ type CardWithQuantity struct {
 
 // CalculateDeckStats computes statistics from a list of DeckCards,
 // including type distribution, monster attributes, and average ATK/DEF.
-func CalculateDeckStats(deckCards []models.DeckCard) CollectionStats {
+func CalculateDeckStats(deckCards []models.DeckCard) Stats {
 	cards := convertDeckCardsToGeneric(deckCards)
 
 	monsterCount, spellCount, trapCount := countCardTypes(cards)
 	attributes := countMonsterAttributes(cards)
 	avgStats := computeAverageStats(cards)
+	totalCards := countTotalCards(cards)
 
-	return CollectionStats{
+	return Stats{
 		MonsterCount: monsterCount,
 		SpellCount:   spellCount,
 		TrapCount:    trapCount,
 		Attributes:   attributes,
 		AverageStats: avgStats,
+		TotalCards:   totalCards,
 	}
 }
 
@@ -59,10 +62,10 @@ func convertDeckCardsToGeneric(deckCards []models.DeckCard) []CardWithQuantity {
 // CalculateCollectionStats returns overall statistics for a user's card collection,
 // including counts of monsters, spells, and traps, monster attribute distribution,
 // and average ATK/DEF for monster cards.
-func CalculateCollectionStats(userID uint) (CollectionStats, error) {
+func CalculateCollectionStats(userID uint) (Stats, error) {
 	userCards, err := GetCollectionByUserID(userID)
 	if err != nil {
-		return CollectionStats{}, err
+		return Stats{}, err
 	}
 
 	cards := convertUserCardsToGeneric(userCards)
@@ -70,13 +73,15 @@ func CalculateCollectionStats(userID uint) (CollectionStats, error) {
 	monsterCount, spellCount, trapCount := countCardTypes(cards)
 	attributes := countMonsterAttributes(cards)
 	avgStats := computeAverageStats(cards)
+	totalCards := countTotalCards(cards)
 
-	return CollectionStats{
+	return Stats{
 		MonsterCount: monsterCount,
 		SpellCount:   spellCount,
 		TrapCount:    trapCount,
 		Attributes:   attributes,
 		AverageStats: avgStats,
+		TotalCards:   totalCards,
 	}, nil
 }
 
@@ -90,6 +95,15 @@ func convertUserCardsToGeneric(userCards []models.UserCard) []CardWithQuantity {
 		})
 	}
 	return result
+}
+
+// countTotalCards returns the total number of cards in a user's collection or deck
+func countTotalCards(cards []CardWithQuantity) int {
+	total := 0
+	for _, uc := range cards {
+		total += uc.Quantity
+	}
+	return total
 }
 
 // countCardTypes calculates the number of Monster, Spell, and Trap cards from a generic card slice.
