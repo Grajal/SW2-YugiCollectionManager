@@ -20,34 +20,40 @@ type Stats struct {
 	TotalCards   int            `json:"total_cards"`
 }
 
-// CardWithQuantity is a generic wrapper for any card + quantity structure,
-// allowing reuse of stat functions across collections and decks.
 type CardWithQuantity struct {
 	Card     models.Card
 	Quantity int
 }
 
-// CalculateDeckStats computes statistics from a list of DeckCards,
-// including type distribution, monster attributes, and average ATK/DEF.
+// CalculateDeckStats computes statistics from a list of DeckCards.
 func CalculateDeckStats(deckCards []models.DeckCard) Stats {
 	cards := convertDeckCardsToGeneric(deckCards)
+	return calculateStats(cards)
+}
 
-	monsterCount, spellCount, trapCount := countCardTypes(cards)
-	attributes := countMonsterAttributes(cards)
-	avgStats := computeAverageStats(cards)
-	totalCards := countTotalCards(cards)
+// CalculateCollectionStats computes statistics for a user's card collection.
+func CalculateCollectionStats(userID uint) (Stats, error) {
+	userCards, err := GetCollectionByUserID(userID)
+	if err != nil {
+		return Stats{}, err
+	}
+	cards := convertUserCardsToGeneric(userCards)
+	return calculateStats(cards), nil
+}
 
+// Shared logic for computing Stats from generic cards.
+func calculateStats(cards []CardWithQuantity) Stats {
 	return Stats{
-		MonsterCount: monsterCount,
-		SpellCount:   spellCount,
-		TrapCount:    trapCount,
-		Attributes:   attributes,
-		AverageStats: avgStats,
-		TotalCards:   totalCards,
+		MonsterCount: countCardTypes(cards, "monster"),
+		SpellCount:   countCardTypes(cards, "spell"),
+		TrapCount:    countCardTypes(cards, "trap"),
+		Attributes:   countMonsterAttributes(cards),
+		AverageStats: computeAverageStats(cards),
+		TotalCards:   countTotalCards(cards),
 	}
 }
 
-// convertDeckCardsToGeneric converts a slice of DeckCard into []CardWithQuantity
+// Converts []DeckCard into []CardWithQuantity.
 func convertDeckCardsToGeneric(deckCards []models.DeckCard) []CardWithQuantity {
 	result := make([]CardWithQuantity, 0, len(deckCards))
 	for _, dc := range deckCards {
@@ -59,33 +65,7 @@ func convertDeckCardsToGeneric(deckCards []models.DeckCard) []CardWithQuantity {
 	return result
 }
 
-// CalculateCollectionStats returns overall statistics for a user's card collection,
-// including counts of monsters, spells, and traps, monster attribute distribution,
-// and average ATK/DEF for monster cards.
-func CalculateCollectionStats(userID uint) (Stats, error) {
-	userCards, err := GetCollectionByUserID(userID)
-	if err != nil {
-		return Stats{}, err
-	}
-
-	cards := convertUserCardsToGeneric(userCards)
-
-	monsterCount, spellCount, trapCount := countCardTypes(cards)
-	attributes := countMonsterAttributes(cards)
-	avgStats := computeAverageStats(cards)
-	totalCards := countTotalCards(cards)
-
-	return Stats{
-		MonsterCount: monsterCount,
-		SpellCount:   spellCount,
-		TrapCount:    trapCount,
-		Attributes:   attributes,
-		AverageStats: avgStats,
-		TotalCards:   totalCards,
-	}, nil
-}
-
-// convertUserCardsToGeneric transforms []UserCard into []CardWithQuantity
+// Converts []UserCard into []CardWithQuantity.
 func convertUserCardsToGeneric(userCards []models.UserCard) []CardWithQuantity {
 	result := make([]CardWithQuantity, 0, len(userCards))
 	for _, uc := range userCards {
@@ -97,40 +77,29 @@ func convertUserCardsToGeneric(userCards []models.UserCard) []CardWithQuantity {
 	return result
 }
 
-// countTotalCards returns the total number of cards in a user's collection or deck
+// Counts total number of cards.
 func countTotalCards(cards []CardWithQuantity) int {
 	total := 0
-	for _, uc := range cards {
-		total += uc.Quantity
+	for _, c := range cards {
+		total += c.Quantity
 	}
 	return total
 }
 
-// countCardTypes calculates the number of Monster, Spell, and Trap cards from a generic card slice.
-func countCardTypes(cards []CardWithQuantity) (int, int, int) {
-	var monsterCount, spellCount, trapCount int
-
+// Counts cards by type using normalized string matching.
+func countCardTypes(cards []CardWithQuantity, targetType string) int {
+	count := 0
 	for _, c := range cards {
-		qty := c.Quantity
-		cardType := c.Card.Type
-
-		switch {
-		case containsIgnoreCase(cardType, "monster"):
-			monsterCount += qty
-		case containsIgnoreCase(cardType, "spell"):
-			spellCount += qty
-		case containsIgnoreCase(cardType, "trap"):
-			trapCount += qty
+		if strings.Contains(strings.ToLower(c.Card.Type), strings.ToLower(targetType)) {
+			count += c.Quantity
 		}
 	}
-
-	return monsterCount, spellCount, trapCount
+	return count
 }
 
-// countMonsterAttributes tallies the distribution of monster attributes (e.g., DARK, LIGHT).
+// Tallies monster card attributes.
 func countMonsterAttributes(cards []CardWithQuantity) map[string]int {
 	attributes := make(map[string]int)
-
 	for _, c := range cards {
 		if c.Card.MonsterCard != nil {
 			attr := strings.ToUpper(c.Card.MonsterCard.Attribute)
@@ -139,41 +108,35 @@ func countMonsterAttributes(cards []CardWithQuantity) map[string]int {
 			}
 		}
 	}
-
 	return attributes
 }
 
-// computeAverageStats calculates average ATK/DEF across all Monster cards, weighted by quantity.
+// Computes average ATK and DEF for monster cards, weighted by quantity.
 func computeAverageStats(cards []CardWithQuantity) AvgStats {
-	var totalATK, totalDEF, count int
+	var (
+		totalATK, totalDEF, monsterCount int
+	)
 
 	for _, c := range cards {
-		qty := c.Quantity
-		if c.Card.MonsterCard != nil {
-			atk := c.Card.MonsterCard.Atk
-			def := c.Card.MonsterCard.Def
-
-			if atk >= 0 {
-				totalATK += atk * qty
+		mc := c.Card.MonsterCard
+		if mc != nil {
+			qty := c.Quantity
+			if mc.Atk >= 0 {
+				totalATK += mc.Atk * qty
 			}
-			if def >= 0 {
-				totalDEF += def * qty
+			if mc.Def >= 0 {
+				totalDEF += mc.Def * qty
 			}
-			count += qty
+			monsterCount += qty
 		}
 	}
 
-	if count == 0 {
+	if monsterCount == 0 {
 		return AvgStats{}
 	}
 
 	return AvgStats{
-		AvgATK: float64(totalATK) / float64(count),
-		AvgDEF: float64(totalDEF) / float64(count),
+		AvgATK: float64(totalATK) / float64(monsterCount),
+		AvgDEF: float64(totalDEF) / float64(monsterCount),
 	}
-}
-
-// containsIgnoreCase checks if s contains substr (case-insensitive).
-func containsIgnoreCase(s, substr string) bool {
-	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
 }
