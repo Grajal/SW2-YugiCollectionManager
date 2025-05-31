@@ -3,7 +3,6 @@ package services
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
@@ -80,41 +79,4 @@ func DeleteQuantityCardFromCollection(userID, cardID uint, quantityToRemove int)
 	}
 
 	return database.DB.Delete(&userCard).Error
-}
-
-type CollectionStats struct {
-	MonsterCount int `json:"monster"`
-	SpellCount   int `json:"spell"`
-	TrapCount    int `json:"trap"`
-}
-
-// CalculateCollectionStats computes card type distribution for a user's collection.
-func CalculateCollectionStats(userID uint) (CollectionStats, error) {
-	userCards, err := GetCollectionByUserID(userID)
-	if err != nil {
-		return CollectionStats{}, err
-	}
-
-	stats := CollectionStats{}
-
-	for _, uc := range userCards {
-		cardType := uc.Card.Type
-		quantity := uc.Quantity
-
-		switch {
-		case containsIgnoreCase(cardType, "monster"):
-			stats.MonsterCount += quantity
-		case containsIgnoreCase(cardType, "spell"):
-			stats.SpellCount += quantity
-		case containsIgnoreCase(cardType, "trap"):
-			stats.TrapCount += quantity
-		}
-	}
-
-	return stats, nil
-}
-
-// Helper function to match type regardless of case
-func containsIgnoreCase(s, substr string) bool {
-	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
 }
