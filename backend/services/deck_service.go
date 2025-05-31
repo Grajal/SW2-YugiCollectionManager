@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
@@ -55,7 +56,12 @@ func getDeckByIDAndUserID(deckID, userID uint) (*models.Deck, error) {
 
 func GetDecksByUserID(userID uint) ([]models.Deck, error) {
 	var decks []models.Deck
-	err := database.DB.Where("user_id = ?", userID).Find(&decks).Error
+	err := database.DB.Where("user_id = ?", userID).Preload("DeckCards").
+		Preload("DeckCards.Card.MonsterCard").
+		Preload("DeckCards.Card.SpellTrapCard").
+		Preload("DeckCards.Card.LinkMonsterCard").
+		Preload("DeckCards.Card.PendulumMonsterCard").
+		Preload("DeckCards.Card").Find(&decks).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch decks: %w", err)
 	}
@@ -91,4 +97,36 @@ func GetCardsByDeck(userID, deckID uint) ([]models.DeckCard, error) {
 	}
 
 	return deckCards, nil
+}
+
+func ExportDeckAsYDK(userID, deckID uint) (string, error) {
+	deck, err := getDeckByIDAndUserID(deckID, userID)
+	if err != nil {
+		return "", fmt.Errorf("deck not found or unauthorized: %w", err)
+	}
+
+	var cards []models.DeckCard
+	err = database.DB.Where("deck_id = ?", deck.ID).Preload("Card").Find(&cards).Error
+	if err != nil {
+		return "", fmt.Errorf("failed to load cards: %w", err)
+	}
+
+	var mainLines, extraLines, sideLines []string
+	for _, c := range cards {
+		for i := 0; i < c.Quantity; i++ {
+			line := fmt.Sprintf("%d", c.Card.CardYGOID)
+			switch c.Zone {
+			case "main":
+				mainLines = append(mainLines, line)
+			case "extra":
+				extraLines = append(extraLines, line)
+			case "side":
+				sideLines = append(sideLines, line)
+			}
+		}
+	}
+
+	result := "#main\n" + strings.Join(mainLines, "\n") + "\n#extra\n" + strings.Join(extraLines, "\n") + "\n#side\n" + strings.Join(sideLines, "\n")
+
+	return result, nil
 }

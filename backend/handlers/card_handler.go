@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -62,17 +63,17 @@ func GetCards(c *gin.Context) {
 }
 
 // SearchCards handles GET requests to search cards in the database.
-// It filters by name, type, and archetype. If no results are found locally,
+// It filters by name, type, and frameType. If no results are found locally,
 // it tries to fetch similar cards from the external YGOProDeck API.
 func SearchCards(c *gin.Context) {
 	name := c.Query("name")
 	cardType := c.Query("type")
-	archetype := c.Query("archetype")
+	frameType := c.Query("frameType")
 
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	cards, err := services.GetFilteredCards(name, cardType, archetype, limit, offset)
+	cards, err := services.GetFilteredCards(name, cardType, frameType, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve cards from database"})
 		return
@@ -81,13 +82,19 @@ func SearchCards(c *gin.Context) {
 	if len(cards) == 0 && name != "" {
 		fetchedCards, err := services.FetchAndStoreCardsByName(name)
 		if err != nil {
+			if strings.Contains(err.Error(), "invalid search term") {
+				// Catch internal error from YGOProDeckAPI with some bad request
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid card name format"})
+				return
+			}
+			log.Println("Error fetching from API:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch cards from external API"})
 			return
 		}
 		cards = fetchedCards
 	}
 
-	total, err := services.CountFilteredCards(name, cardType, archetype)
+	total, err := services.CountFilteredCards(name, cardType, frameType)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count cards"})
 		return

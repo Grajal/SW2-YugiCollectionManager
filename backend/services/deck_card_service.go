@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
@@ -34,14 +33,14 @@ func AddCardToDeck(userID uint, deckID uint, cardID uint, quantity int) (*models
 		return nil, fmt.Errorf("deck not found or unauthorized: %w", err)
 	}
 
-	card, err := GetOrFetchCardByIDOrName(int(cardID), "")
+	card, err := GetCardByID(cardID)
 	if err != nil {
 		return nil, fmt.Errorf("card not found: %w", err)
 	}
 
-	isExtra := IsExtraDeckCard(card.FrameType)
+	zone := GetZoneFromCard(card)
 
-	if err := ValidateDeckCardCount(deck.ID, isExtra, quantity); err != nil {
+	if err := ValidateDeckCardCount(deck.ID, zone, quantity); err != nil {
 		return nil, err
 	}
 
@@ -65,10 +64,10 @@ func AddCardToDeck(userID uint, deckID uint, cardID uint, quantity int) (*models
 	}
 
 	newEntry := models.DeckCard{
-		DeckID:      deckID,
-		CardID:      card.ID,
-		Quantity:    quantity,
-		IsExtraDeck: isExtra,
+		DeckID:   deckID,
+		CardID:   card.ID,
+		Quantity: quantity,
+		Zone:     zone,
 	}
 
 	if err := database.DB.Create(&newEntry).Error; err != nil {
@@ -78,12 +77,12 @@ func AddCardToDeck(userID uint, deckID uint, cardID uint, quantity int) (*models
 	return &newEntry, nil
 }
 
-func IsExtraDeckCard(frameType string) bool {
-	switch strings.ToLower(frameType) {
+func GetZoneFromCard(card *models.Card) string {
+	switch card.FrameType {
 	case "link", "xyz", "fusion", "synchro":
-		return true
+		return "extra"
 	default:
-		return false
+		return "main"
 	}
 }
 
@@ -116,9 +115,9 @@ func RemoveCardFromDeck(userID, deckID, cardID uint, quantity int) error {
 	return nil
 }
 
-func ValidateDeckCardCount(deckID uint, isExtra bool, newCards int) error {
+func ValidateDeckCardCount(deckID uint, zone string, newCards int) error {
 	var total sql.NullInt64
-	query := database.DB.Model(&models.DeckCard{}).Where("deck_id = ? AND is_extra_deck = ?", deckID, isExtra).Select("SUM(quantity)").Scan(&total)
+	query := database.DB.Model(&models.DeckCard{}).Where("deck_id = ? AND zone = ?", deckID, zone).Select("SUM(quantity)").Scan(&total)
 	if query.Error != nil {
 		return query.Error
 	}
@@ -128,10 +127,10 @@ func ValidateDeckCardCount(deckID uint, isExtra bool, newCards int) error {
 		sum = total.Int64
 	}
 
-	if isExtra && sum+int64(newCards) > 20 {
+	if zone == "extra" && sum+int64(newCards) > 20 {
 		return ErrExtraDeckLimitReached
 	}
-	if !isExtra && sum+int64(newCards) > 60 {
+	if zone == "main" && sum+int64(newCards) > 60 {
 		return ErrDeckLimitReached
 	}
 	return nil

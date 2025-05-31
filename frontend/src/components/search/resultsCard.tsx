@@ -17,15 +17,15 @@ export const CardResult: React.FC<CardResultProps> = ({ card, onClick }) => {
       <div className="relative pb-[140%]">
         {" "}
         <img
-          src={card.image || "/placeholder.svg?height=300&width=200"}
+          src={card.ImageURL || "/placeholder.svg?height=300&width=200"}
           className="absolute inset-0 w-full h-full object-cover"
         />
       </div>
       <div className="p-3 text-center">
-        <h3 className="text-sm font-medium text-white truncate" title={card.name}>
-          {card.name}
+        <h3 className="text-sm font-medium text-white truncate" title={card.Name}>
+          {card.Name}
         </h3>
-        <p className="text-xs text-gray-400 mt-1">{card.tipo}</p>
+        <p className="text-xs text-gray-400 mt-1">{card.Type}</p>
       </div>
     </div>
   )

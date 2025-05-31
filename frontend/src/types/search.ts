@@ -1,15 +1,67 @@
+
+interface BaseCardPlaceholder {
+  ID: number;
+  CardYGOID: number;
+  Name: string;
+  Desc: string;
+  FrameType: string;
+  Type: string;
+  ImageURL: string;
+  MonsterCard: null;
+  SpellTrapCard: null;
+  LinkMonsterCard: null;
+  PendulumMonsterCard: null;
+}
+
+interface SpellTrapCardDetails {
+  CardID: number;
+  Type: string;
+  Card: BaseCardPlaceholder;
+}
+
+interface MonsterCardDetails {
+  Atk?: number | null;
+  Def?: number | null;
+  Level?: number | null;
+  Rank?: number | null;
+  Attribute?: string | null;
+  Race?: string | null;
+  Archetype?: string | null;
+}
+
+interface LinkMonsterCardDetails {
+  Atk?: number | null;
+  Attribute?: string | null;
+  Race?: string | null;
+  Archetype?: string | null;
+  LinkValue?: number | null;
+  LinkMarkers?: string[] | null;
+}
+
+interface PendulumMonsterCardDetails {
+  Atk?: number | null;
+  Def?: number | null;
+  Level?: number | null;
+  Attribute?: string | null;
+  Race?: string | null;
+  Archetype?: string | null;
+  PendulumScale?: number | null;
+  PendulumEffect?: string | null;
+}
+
 export interface SearchResult {
-  id: string
-  name: string
-  image: string
-  tipo: string
-  arquetipo?: string
-  atributo?: string
-  estrellas?: string
-  carta: string
-  atk?: number
-  def?: number
-  descripcion: string
+  ID: number;
+  CardYGOID: number;
+  Name: string;
+  Desc: string;
+  FrameType: string;
+  Type: string;
+  ImageURL: string;
+
+  MonsterCard?: MonsterCardDetails | null;
+  SpellTrapCard?: SpellTrapCardDetails | null;
+  LinkMonsterCard?: LinkMonsterCardDetails | null;
+  PendulumMonsterCard?: PendulumMonsterCardDetails | null;
 }
 
 export interface FilterOptions {
