@@ -3,6 +3,7 @@ package api_tests
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
@@ -86,7 +87,8 @@ func TestGetCardNotInDb(t *testing.T) {
 	}
 
 	// Perform a GET request to /items
-	response := client.PerformRequest("GET", "/api/cards/Dark Magician", nil, nil)
+	escaped := url.PathEscape("Dark Magician")
+	response := client.PerformRequest("GET", "/api/cards/"+escaped, nil, nil)
 
 	// Assert that the response code is 200 OK
 	assert.Equal(t, http.StatusOK, response.Code)
