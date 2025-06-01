@@ -58,6 +58,9 @@ func main() {
 	collectionService := services.NewCollectionService(collectionRepo)
 	collectionHandler := handlers.NewCollectionHandler(collectionService)
 
+	statsService := services.NewStatsService(collectionService, deckService)
+	statsHandler := handlers.NewStatsHandler(statsService, deckService)
+
 	router := gin.Default()
 	allowedOrigins := "http://localhost:5173,https://sw-2-yugi-collection-manager.vercel.app"
 
@@ -77,6 +80,7 @@ func main() {
 	routes.RegisterAuthRoutes(api, authHandler)
 	routes.RegisterCardRoutes(api, cardHandler)
 	routes.RegisterDeckRoutes(api, deckHandler)
+	routes.RegisterStatsRoutes(api, statsHandler)
 
 	collections := api.Group("/collections")
 	collections.Use(middleware.AuthMiddleware())
