@@ -21,6 +21,7 @@ export default function CatalogPage() {
     tipo: "",
     atributo: "",
     estrellas: "",
+    frameType: "",
   })
   // const [currentResults, setCurrentResults] = useState<SearchResult[]>()
   const [currentPage, setCurrentPage] = useState<number>(1)
@@ -33,12 +34,42 @@ export default function CatalogPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${API_URL}/cards/`, {
+        let effectiveApiUrl = `${API_URL}/cards/` // Default to fetching all cards
+
+        const queryParams = new URLSearchParams()
+        if (searchQuery.trim() !== "") {
+          queryParams.append('name', searchQuery)
+        }
+        if (filters.tipo.trim() !== "") {
+          queryParams.append('type', filters.tipo)
+        }
+        if (filters.frameType.trim() !== "") {
+          queryParams.append('frameType', filters.frameType)
+        }
+        // Note: filters.atributo and filters.estrellas are not currently sent to the backend.
+        // Add them to queryParams here if backend support is added.
+        // e.g.:
+        // if (filters.atributo.trim() !== "") {
+        //   queryParams.append('attribute', filters.atributo);
+        // }
+        // if (filters.estrellas.trim() !== "") {
+        //   queryParams.append('level', filters.estrellas);
+        // }
+
+        const queryString = queryParams.toString()
+
+        if (queryString) { // If there are any parameters, use the search endpoint
+          effectiveApiUrl = `${API_URL}/cards/search?${queryString}`
+        }
+
+        console.log('Fetching from URL:', effectiveApiUrl) // For debugging
+
+        const response = await fetch(effectiveApiUrl, {
           credentials: 'include',
         })
 
         if (!response.ok) {
-          throw new Error('Failed to fetch cards')
+          throw new Error(`Failed to fetch cards from ${effectiveApiUrl}`)
         }
 
         const fetchedData = await response.json()
@@ -48,11 +79,15 @@ export default function CatalogPage() {
 
       } catch (error) {
         console.error('Error fetching cards:', error)
-        setCards([])
+        // Check if error is an instance of Error to safely access message property
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+        toast.error(`Error fetching cards: ${errorMessage}`)
+        setCards([]) // Set to empty array on error
       }
     }
+
     fetchData()
-  }, [])
+  }, [searchQuery, filters]) // Dependencies: re-fetch when query or filters change
 
   // Filtrar resultados basados en la búsqueda y filtros
   const filteredResults = cards.filter((card) => {
@@ -60,12 +95,13 @@ export default function CatalogPage() {
       !searchQuery || card.Name.toLowerCase().includes(searchQuery.toLowerCase())
 
     const tipoMatches = !filters.tipo || card.Type === filters.tipo
+    const frameTypeMatches = !filters.frameType || card.FrameType === filters.frameType
 
     return (
       nameMatches &&
-      tipoMatches
+      tipoMatches &&
+      frameTypeMatches
     )
-
   })
 
   // Calcular resultados para la página actual
