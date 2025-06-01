@@ -23,7 +23,6 @@ export default function CatalogPage() {
     estrellas: "",
     frameType: "",
   })
-  // const [currentResults, setCurrentResults] = useState<SearchResult[]>()
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [selectedCard, setSelectedCard] = useState<SearchResult | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false)
@@ -36,7 +35,7 @@ export default function CatalogPage() {
     const fetchData = async () => {
       setIsLoading(true)
       try {
-        let effectiveApiUrl = `${API_URL}/cards/` // Default to fetching all cards
+        let effectiveApiUrl = `${API_URL}/cards/`
 
         const queryParams = new URLSearchParams()
         if (searchQuery.trim() !== "") {
@@ -48,30 +47,34 @@ export default function CatalogPage() {
         if (filters.frameType.trim() !== "") {
           queryParams.append('frameType', filters.frameType)
         }
-        // Note: filters.atributo and filters.estrellas are not currently sent to the backend.
-        // Add them to queryParams here if backend support is added.
-        // e.g.:
-        // if (filters.atributo.trim() !== "") {
-        //   queryParams.append('attribute', filters.atributo);
-        // }
-        // if (filters.estrellas.trim() !== "") {
-        //   queryParams.append('level', filters.estrellas);
-        // }
 
         const queryString = queryParams.toString()
 
-        if (queryString) { // If there are any parameters, use the search endpoint
+        if (queryString) {
           effectiveApiUrl = `${API_URL}/cards/search?${queryString}`
         }
 
-        console.log('Fetching from URL:', effectiveApiUrl) // For debugging
+        console.log('Fetching from URL:', effectiveApiUrl)
 
         const response = await fetch(effectiveApiUrl, {
           credentials: 'include',
         })
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch cards from ${effectiveApiUrl}`)
+          if (response.status === 400) {
+            try {
+              const errorData = await response.json()
+              if (errorData && errorData.error === "Invalid search term") {
+                setCards([])
+                return
+              } else {
+                throw new Error(errorData.error || `Error 400: Solicitud incorrecta al buscar cartas.`)
+              }
+            } catch {
+              throw new Error(`Solicitud incorrecta al buscar cartas, respuesta no es JSON válido.`)
+            }
+          }
+          throw new Error(`Error al buscar cartas. Estado: ${response.status}`)
         }
 
         const fetchedData = await response.json()
@@ -81,19 +84,17 @@ export default function CatalogPage() {
 
       } catch (error) {
         console.error('Error fetching cards:', error)
-        // Check if error is an instance of Error to safely access message property
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
         toast.error(`Error fetching cards: ${errorMessage}`)
-        setCards([]) // Set to empty array on error
+        setCards([])
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchData()
-  }, [searchQuery, filters]) // Dependencies: re-fetch when query or filters change
+  }, [searchQuery, filters])
 
-  // Filtrar resultados basados en la búsqueda y filtros
   const filteredResults = cards.filter((card) => {
     const nameMatches =
       !searchQuery || card.Name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -108,24 +109,19 @@ export default function CatalogPage() {
     )
   })
 
-  // Calcular resultados para la página actual
   const indexOfLastResult = currentPage * resultsPerPage
   const indexOfFirstResult = indexOfLastResult - resultsPerPage
   const currentResults: SearchResult[] = filteredResults.slice(indexOfFirstResult, indexOfLastResult)
   const totalPages = Math.ceil(filteredResults.length / resultsPerPage)
 
-  // const handleData = () => {
-
-  // }
-
   const handleSearch = (query: string) => {
     setSearchQuery(query)
-    setCurrentPage(1) // Resetear a la primera página cuando se busca
+    setCurrentPage(1)
   }
 
   const handleFilterChange = (newFilters: FilterOptions) => {
     setFilters(newFilters)
-    setCurrentPage(1) // Resetear a la primera página cuando se cambian los filtros
+    setCurrentPage(1)
   }
 
   const handleCardClick = (card: SearchResult) => {
@@ -135,7 +131,6 @@ export default function CatalogPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
-    // Scroll al inicio de los resultados
     window.scrollTo({
       top: document.getElementById("results-section")?.offsetTop || 0,
       behavior: "smooth",
@@ -195,7 +190,6 @@ export default function CatalogPage() {
           {isLoading ? (
             <div className="text-center py-10">
               <p className="text-lg text-gray-400">Cargando cartas...</p>
-              {/* You can add a spinner component here if you have one */}
             </div>
           ) : (
             <>
