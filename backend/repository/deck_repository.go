@@ -85,7 +85,11 @@ func (r *deckRepository) FindByIDAndUserID(deckID, userID uint) (*models.Deck, e
 
 // Delete a deck by ID and user ID
 func (r *deckRepository) DeleteByIDAndUserID(deckID, userID uint) error {
-	return r.db.Where("id = ? AND user_id = ?", deckID, userID).Delete(&models.Deck{}).Error
+	result := r.db.Where("id = ? AND user_id = ?", deckID, userID).Delete(&models.Deck{})
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return result.Error
 }
 
 // Get all deck cards for a specific deck
