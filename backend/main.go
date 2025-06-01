@@ -8,6 +8,7 @@ import (
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/handlers"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/middleware"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/repository"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/routes"
@@ -47,11 +48,17 @@ func main() {
 	cardService := services.NewCardService(cardRepo, cardFactory)
 	cardHandler := handlers.NewCardHandler(cardService)
 
+
 	deckRepo := repository.NewDeckRepository()
 	deckCardRepo := repository.NewDeckCardRepository()
 	deckCardService := services.NewDeckCardService(deckCardRepo)
 	deckService := services.NewDeckService(deckRepo, cardService, deckCardService)
 	deckHandler := handlers.NewDeckHandler(deckService)
+
+	collectionRepo := repository.NewCollectionRepository()
+	collectionService := services.NewCollectionService(collectionRepo)
+	collectionHandler := handlers.NewCollectionHandler(collectionService)
+
 
 	router := gin.Default()
 	allowedOrigins := "http://localhost:5173,https://sw-2-yugi-collection-manager.vercel.app"
@@ -72,6 +79,16 @@ func main() {
 	routes.RegisterAuthRoutes(api, authHandler)
 	routes.RegisterCardRoutes(api, cardHandler)
 	routes.RegisterDeckRoutes(api, deckHandler)
+
+	collections := api.Group("/collections")
+	collections.Use(middleware.AuthMiddleware())
+	routes.RegisterCollectionRoutes(collections, collectionHandler)
+
+	auth := api.Group("/auth")
+	{
+		auth.POST("/login", handlers.Login)
+		auth.POST("/register", handlers.Register)
+	}
 
 	if err := router.Run(":" + port); err != nil {
 		panic("Failed to start server: " + err.Error())
