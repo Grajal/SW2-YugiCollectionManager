@@ -9,6 +9,6 @@ type User struct {
 	Email    string `gorm:"unique;not null"`
 	Password string // Hashed password
 
-	Collection []UserCard `gorm:"primaryKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Collection []UserCard `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Decks      []Deck     `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }

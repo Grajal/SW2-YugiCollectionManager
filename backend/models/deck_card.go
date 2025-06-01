@@ -7,4 +7,5 @@ type DeckCard struct {
 	Zone     string `gorm:"type:varchar(10);not null"`
 
 	Card Card `gorm:"foreignKey:CardID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Deck Deck `gorm:"foreignKey:DeckID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }

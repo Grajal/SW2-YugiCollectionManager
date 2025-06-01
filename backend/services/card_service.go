@@ -1,287 +1,218 @@
 package services
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/client"
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/repository"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/utils"
-	"gorm.io/gorm"
 )
 
-func GetOrFetchCardByIDOrName(id int, name string) (*models.Card, error) {
-	var card models.Card
-	var err error
+// CardService defines the operations available to manage cards.
+// Implementations should be responsible for obtaining, filtering and persisting cards.
+type CardService interface {
+	GetCardByID(id uint) (*models.Card, error)
+	GetCardByYGOID(id int) (*models.Card, error)
+	GetCardByName(name string) (*models.Card, error)
+	GetCards(limit, offset int) ([]*models.Card, error)
+	CountAllCards() (int64, error)
+	GetFilteredCards(name, cardType, frameType string, limit, offset int) ([]*models.Card, error)
+	CountFilteredCards(name, cardType, frameType string) (int64, error)
+}
 
-	query := database.DB.Preload("MonsterCard").
-		Preload("PendulumMonsterCard").
-		Preload("LinkMonsterCard").
-		Preload("SpellTrapCard")
+type cardService struct {
+	repo    repository.CardRepository
+	factory CardFactory
+}
 
-	if id > 0 {
-		err = query.First(&card, "card_ygo_id = ?", id).Error
-	} else {
-		err = query.First(&card, "name ILIKE ?", name).Error
+func NewCardService(repo repository.CardRepository, factory CardFactory) CardService {
+	return &cardService{repo, factory}
+}
+
+// GetCardByID retrieves a card from the database using its internal database ID.
+// Returns an error if the card is not found or the database query fails.
+func (s *cardService) GetCardByID(id uint) (*models.Card, error) {
+	return s.repo.GetByID(id)
+}
+
+// GetCardByYGOID retrieves a card by its YGOProDeck ID.
+// If the card does not exist in the local database, it attempts to fetch it from the external API,
+// uploads the image to S3, builds the card, saves it, and returns the resulting model.
+func (s *cardService) GetCardByYGOID(id int) (*models.Card, error) {
+	// Paso 1: buscar en base de datos
+	card, err := s.repo.GetByYGOProID(id)
+	if err == nil && card != nil {
+		return card, nil
 	}
 
-	if err == nil {
-		return &card, nil
-	}
-
-	apiCard, err := client.FetchCardByIDOrName(id, name)
+	// Paso 2: fetch desde API externa
+	apiCard, err := client.FetchCardByIDOrName(id, "")
 	if err != nil {
-		return nil, fmt.Errorf("card not found in external API: %w", err)
+		return nil, fmt.Errorf("failed to fetch card from API: %w", err)
 	}
 
-	s3URL, err := utils.UploadImage(apiCard.ID, apiCard.ImageURL)
+	if apiCard == nil || apiCard.ImageURL == "" {
+		return nil, fmt.Errorf("invalid API response: missing card or image")
+	}
+
+	imageURL, err := utils.UploadCardImageToS3(apiCard.ID, apiCard.ImageURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload image to S3: %w", err)
 	}
 
-	newCard := BuildCardFromAPICard(apiCard, s3URL)
+	card = s.factory.BuildCardFromAPI(apiCard, imageURL)
 
-	if err := database.DB.Create(&newCard).Error; err != nil {
-		return nil, fmt.Errorf("failed to store new card: %w", err)
-
+	if err := s.repo.Create(card); err != nil {
+		return nil, fmt.Errorf("failed to save card to database: %w", err)
 	}
 
-	return &newCard, nil
+	return card, nil
 }
 
-func GetCardByID(id uint) (*models.Card, error) {
-	var card models.Card
-	err := database.DB.Preload("MonsterCard").Preload("SpellTrapCard").Preload("LinkMonsterCard").Preload("PendulumMonsterCard").First(&card, "id = ?", id).Error
-
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("card with ID %d not foun in internal database", id)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to retrieve card from database: %w", err)
+// GetCardByName retrieves a card by its name.
+// If not found in the database, it tries to fetch it from the external API,
+// uploads the image to S3, builds the card, saves it, and returns it.
+func (s *cardService) GetCardByName(name string) (*models.Card, error) {
+	card, err := s.repo.GetByName(name)
+	if err == nil && card != nil {
+		return card, nil
 	}
 
-	return &card, nil
+	apiCard, err := client.FetchCardByIDOrName(0, name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch card from API: %w", err)
+	}
+
+	if apiCard == nil || apiCard.ImageURL == "" {
+		return nil, fmt.Errorf("invalid API response: missing card or image")
+	}
+
+	imageURL, err := utils.UploadCardImageToS3(apiCard.ID, apiCard.ImageURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload image to S3: %w", err)
+	}
+
+	card = s.factory.BuildCardFromAPI(apiCard, imageURL)
+
+	if err := s.repo.Create(card); err != nil {
+		return nil, fmt.Errorf("failed to save card to database: %w", err)
+	}
+
+	return card, nil
 }
 
-// BuildCardFromAPICard constructs a models.Card object from a given APICard retrieved from the external API.
-// It maps the general card fields and dynamically assigns the appropriate substructure based on the card type.
-func BuildCardFromAPICard(apiCard *client.APICard, imageURL string) models.Card {
-	card := models.Card{
-		CardYGOID: apiCard.ID,
-		Name:      apiCard.Name,
-		Desc:      apiCard.Desc,
-		FrameType: apiCard.FrameType,
-		Type:      apiCard.Type,
-		ImageURL:  imageURL,
+// GetCards retrieves all cards from the database using pagination.
+// If the total number of cards in the database is below a defined threshold,
+// it attempts to fetch a set of random cards from the external API and store them locally.
+func (s *cardService) GetCards(limit, offset int) ([]*models.Card, error) {
+	const minCardThreshold = 50
+	const cardsToFetch = 20
+
+	total, err := s.repo.CountAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to count cards: %w", err)
 	}
 
-	switch {
-	case apiCard.Type == "Spell Card" || apiCard.Type == "Trap Card":
-		card.SpellTrapCard = &models.SpellTrapCard{
-			Type: apiCard.Type,
-		}
-	case apiCard.FrameType == "link":
-		linkMarkersJSON, err := json.Marshal(apiCard.LinkMarkers)
+	if total < minCardThreshold {
+		randomCards, err := client.FetchRandomCards(cardsToFetch)
 		if err != nil {
-			log.Printf("Error marshaling link markers: %v", err)
-			break
+			return nil, fmt.Errorf("failed to fetch random cards: %w", err)
 		}
 
-		card.LinkMonsterCard = &models.LinkMonsterCard{
-			LinkValue:   apiCard.LinkValue,
-			LinkMarkers: string(linkMarkersJSON),
-			Atk:         apiCard.Atk,
-			Level:       0,
-			Attribute:   apiCard.Attribute,
-			Race:        apiCard.Race,
-		}
-	case apiCard.FrameType == "pendulum":
-		card.PendulumMonsterCard = &models.PendulumMonsterCard{
-			Scale: apiCard.Scale,
-		}
-		card.MonsterCard = &models.MonsterCard{
-			Atk:       apiCard.Atk,
-			Def:       apiCard.Def,
-			Level:     apiCard.Level,
-			Attribute: apiCard.Attribute,
-			Race:      apiCard.Race,
-		}
-	default:
+		for _, apiCard := range randomCards {
+			if len(apiCard.CardImages) == 0 || apiCard.CardImages[0].ImageURL == "" {
+				continue
+			}
 
-		card.MonsterCard = &models.MonsterCard{
-			Atk:       apiCard.Atk,
-			Def:       apiCard.Def,
-			Level:     apiCard.Level,
-			Attribute: apiCard.Attribute,
-			Race:      apiCard.Race,
-		}
+			imageURL, err := utils.UploadCardImageToS3(apiCard.ID, apiCard.CardImages[0].ImageURL)
+			if err != nil {
+				log.Printf("error uploading image for card %s: %v", apiCard.Name, err)
+				continue
+			}
 
-	}
-
-	return card
-}
-
-// GetCards retrieves a paginated list of cards from the database, including all their subtype associations.
-// Parameters:
-//   - limit: the maximum number of cards to retrieve.
-//   - offset: the number of cards to skip before starting to return results (used for pagination).
-func GetCards(limit int, offset int) ([]models.Card, error) {
-	var cards []models.Card
-
-	err := database.DB.Preload("MonsterCard").Preload("SpellTrapCard").Preload("LinkMonsterCard").Preload("PendulumMonsterCard").Limit(limit).Offset(offset).Find(&cards).Error
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve cards: %w", err)
-	}
-
-	return cards, nil
-}
-
-// CountAllCards returns the total number of cards stored in the database.
-func CountAllCards() (int64, error) {
-	var count int64
-	err := database.DB.Model(&models.Card{}).Count(&count).Error
-	return count, err
-}
-
-// EnsureMinimumCards checks if there are at least 'min' cards stored in the database.
-// If not, it fetches the missing number of random cards from the external YGOProDeck API
-// and stores them in the database (including uploading their images to S3).
-func EnsureMinimumCards(min int) error {
-	var count int64
-	err := database.DB.Model(&models.Card{}).Count(&count).Error
-	if err != nil {
-		return fmt.Errorf("failed to count cards: %w", err)
-	}
-
-	if count >= int64(min) {
-		return nil
-	}
-
-	needed := int(int64(min) - count)
-	apiCards, err := client.FetchRandomCards(needed)
-	if err != nil {
-		return fmt.Errorf("failed to fetch new cards: %w", err)
-	}
-
-	for _, apiCard := range apiCards {
-		if apiCard.ID == 0 {
-			fmt.Println("Invalid card received from API:", apiCard)
-			continue
-		}
-
-		var existing models.Card
-		err := database.DB.Where("card_ygo_id = ?", apiCard.ID).First(&existing).Error
-		if err == nil {
-			continue
-		}
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return fmt.Errorf("error checking card: %w", err)
-		}
-
-		imageURL := ""
-		if len(apiCard.CardImages) > 0 {
-			imageURL = apiCard.CardImages[0].ImageURL
-		}
-
-		s3URL, err := utils.UploadCardImageToS3(apiCard.ID, imageURL)
-		if err != nil {
-			continue
-		}
-
-		newCard := BuildCardFromAPICard(&apiCard, s3URL)
-		if err := database.DB.Create(&newCard).Error; err != nil {
-			return fmt.Errorf("failed to store new card: %w", err)
+			card := s.factory.BuildCardFromAPI(&apiCard, imageURL)
+			if err := s.repo.Create(card); err != nil {
+				log.Printf("error saving card %s: %v", card.Name, err)
+			}
 		}
 	}
 
-	return nil
-}
-
-// GetCardsByFilters returns cards filtered by name, type, and frameType from the database.
-// If no cards match, it attempts to fetch new ones from the external API and save them.
-func GetFilteredCards(name, cardType, frameType string, limit, offset int) ([]models.Card, error) {
-	db := database.DB.Model(&models.Card{}).
-		Preload("MonsterCard").
-		Preload("SpellTrapCard").
-		Preload("LinkMonsterCard").
-		Preload("PendulumMonsterCard")
-
-	if name != "" {
-		db = db.Where("name ILIKE ?", "%"+name+"%")
-	}
-	if cardType != "" {
-		db = db.Where("type = ?", cardType)
-	}
-	if frameType != "" {
-		db = db.Where("frame_type = ?", frameType)
-	}
-
-	var cards []models.Card
-	err := db.Limit(limit).Offset(offset).Find(&cards).Error
-	return cards, err
-}
-
-// CountFilteredCards returns the number of cards in the database that match the provided filters.
-// It supports filtering by name (case-insensitive, partial match), card type, and frameType.
-func CountFilteredCards(name, cardType, frameType string) (int64, error) {
-	db := database.DB.Model(&models.Card{})
-
-	if name != "" {
-		db = db.Where("name ILIKE ?", "%"+name+"%")
-	}
-	if cardType != "" {
-		db = db.Where("type = ?", cardType)
-	}
-	if frameType != "" {
-		db = db.Where("frame_type = ?", frameType)
-	}
-
-	var count int64
-	err := db.Count(&count).Error
-	return count, err
-}
-
-// FetchAndStoreCardsByName fetches cards from the external YGOProDeck API based on a name filter.
-// It stores only the cards that don't already exist in the database, uploading their images to S3.
-// It returns a list of the stored (or previously existing) cards.
-func FetchAndStoreCardsByName(name string) ([]models.Card, error) {
-	apiCards, err := client.FetchCardsByName(name)
+	cards, err := s.repo.GetAll(limit, offset)
 	if err != nil {
 		return nil, err
 	}
-	if len(apiCards) == 0 {
-		return nil, nil
+
+	result := make([]*models.Card, 0, len(cards))
+	for i := range cards {
+		result = append(result, &cards[i])
+	}
+	return result, nil
+}
+
+// CountAllCards returns the total number of cards stored in the database.
+func (s *cardService) CountAllCards() (int64, error) {
+	return s.repo.CountAll()
+}
+
+// GetFilteredCards returns cards that match the provided name, type, and frameType filters.
+// If no cards are found in the local database and a name is provided,
+// it attempts to fetch matching cards from the external API and stores them locally.
+func (s *cardService) GetFilteredCards(name, cardType, frameType string, limit, offset int) ([]*models.Card, error) {
+	cards, err := s.repo.GetFiltered(name, cardType, frameType, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to filter cards from database: %w", err)
 	}
 
-	var stored []models.Card
-	for _, apiCard := range apiCards {
-		if apiCard.ID == 0 || apiCard.Name == "" {
-			continue
+	if len(cards) > 0 {
+		result := make([]*models.Card, 0, len(cards))
+		for i := range cards {
+			result = append(result, &cards[i])
 		}
+		return result, nil
+	}
 
-		var existing models.Card
-		err := database.DB.Where("card_ygo_id = ?", apiCard.ID).First(&existing).Error
-		if err == nil {
-			stored = append(stored, existing)
-			continue
-		}
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			continue
-		}
-
-		s3URL, err := utils.UploadCardImageToS3(apiCard.ID, apiCard.CardImages[0].ImageURL)
+	if name != "" {
+		apiCards, err := client.FetchCardsByName(name)
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("failed to fetch cards from external API: %w", err)
 		}
 
-		card := BuildCardFromAPICard(&apiCard, s3URL)
-		if err := database.DB.Create(&card).Error; err == nil {
-			stored = append(stored, card)
+		var fetched []*models.Card
+		for _, apiCard := range apiCards {
+			if len(apiCard.CardImages) == 0 || apiCard.CardImages[0].ImageURL == "" {
+				continue
+			}
+
+			imageURL, err := utils.UploadCardImageToS3(apiCard.ID, apiCard.CardImages[0].ImageURL)
+			if err != nil {
+				log.Printf("error uploading image for card %s: %v", apiCard.Name, err)
+				continue
+			}
+
+			card := s.factory.BuildCardFromAPI(&apiCard, imageURL)
+
+			if err := s.repo.Create(card); err != nil {
+				log.Printf("error saving card %s: %v", card.Name, err)
+				continue
+			}
+
+			fetched = append(fetched, card)
 		}
+
+		return fetched, nil
 	}
 
-	return stored, nil
+	return []*models.Card{}, nil
+}
+
+// CountFilteredCards returns the number of cards in the database that match the provided filters.
+// Returns 0 and an error if the database query fails.
+func (s *cardService) CountFilteredCards(name, cardType, frameType string) (int64, error) {
+	count, err := s.repo.CountFiltered(name, cardType, frameType)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count filtered cards: %w", err)
+	}
+	return count, nil
 }

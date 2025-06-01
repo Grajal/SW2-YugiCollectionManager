@@ -84,7 +84,7 @@ export default function CatalogPage() {
         const fetchedData = await response.json()
         console.log('Fetched data from API:', fetchedData)
 
-        setCards(fetchedData["cards"])
+        setCards(fetchedData["cards"] || [])
 
       } catch (error) {
         console.error('Error fetching cards:', error)

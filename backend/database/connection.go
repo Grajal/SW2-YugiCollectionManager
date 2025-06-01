@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -56,4 +57,18 @@ func DBConnect() {
 	}
 
 	log.Fatalf("Failed to connect to database after %d attempts: %v", maxRetries, err)
+}
+
+func AutoMigrate() error {
+	return DB.AutoMigrate(
+		&models.User{},
+		&models.Card{},
+		&models.SpellTrapCard{},
+		&models.MonsterCard{},
+		&models.LinkMonsterCard{},
+		&models.PendulumMonsterCard{},
+		&models.UserCard{},
+		&models.Deck{},
+		&models.DeckCard{},
+	)
 }
