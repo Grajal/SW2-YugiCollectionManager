@@ -158,7 +158,7 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      <Sidebar card={selectedCard} isOpen={isSidebarOpen} onClose={closeSidebar} onAddToCollection={handleAddToCollection} />
+      <Sidebar card={selectedCard} isOpen={isSidebarOpen} onClose={closeSidebar} onAction={() => handleAddToCollection}/>
     </div>
   )
 }

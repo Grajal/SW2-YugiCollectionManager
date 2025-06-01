@@ -2,7 +2,6 @@
 
 import type React from "react"
 import type { Deck } from "../../types/deck"
-import dark from "../../assets/dark.png"
 
 interface DeckResultProps {
   deck: Deck
@@ -18,7 +17,7 @@ export const DeckResult: React.FC<DeckResultProps> = ({ deck, onClick }) => {
       <div className="relative pb-[140%]">
         {" "}
         <img
-          src={dark}
+          src={"https://carduniverse.cl/cdn/shop/products/DeckBoxDiosespng-min_1024x1024@2x.png?v=1652570195"}
           className="absolute inset-0 w-full h-full object-cover"
         />
       </div>

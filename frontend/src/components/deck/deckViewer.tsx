@@ -8,10 +8,11 @@ interface DeckViewerProps {
   deck: Deck
   mainDeck: CardDeck[]
   extraDeck: CardDeck[]
+  sideDeck: CardDeck[]
   onCardClick?: (card: any) => void
 }
 
-const DeckViewer: React.FC<DeckViewerProps> = ({ deck, mainDeck, extraDeck,onCardClick }) => {
+const DeckViewer: React.FC<DeckViewerProps> = ({ deck, mainDeck, extraDeck, sideDeck, onCardClick }) => {
   return (
     <div className="bg-gray-900 min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
@@ -41,6 +42,17 @@ const DeckViewer: React.FC<DeckViewerProps> = ({ deck, mainDeck, extraDeck,onCar
               isMainDeck={false}
             />
           </div>
+        </div>
+
+        {/* Side Deck - Nueva sección debajo */}
+        <div className="mt-10">
+          <DeckSection
+            title="Side Deck"
+            cards={sideDeck}
+            maxCards={10}
+            onCardClick={onCardClick}
+            isMainDeck={false}
+          />
         </div>
       </div>
     </div>

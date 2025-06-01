@@ -21,6 +21,9 @@ export function Header({ username }: { username: string }) {
           </a>
         </div>
         <PopoverGroup className="hidden lg:flex lg:gap-x-12">
+          <a href="/decks" className="text-sm/6 font-semibold text-white">
+            Decks
+          </a>
           <a href="/collection" className="text-sm/6 font-semibold text-white">
             Colección
           </a>

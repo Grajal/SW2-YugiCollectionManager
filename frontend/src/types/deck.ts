@@ -16,5 +16,6 @@ export interface CardDeck {
     CardID: number;
     DeckID: number;
     Quantity: number;
+    IsExtraZone: boolean;
     Zone: string;
 }

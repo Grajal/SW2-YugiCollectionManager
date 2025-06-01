@@ -3,7 +3,7 @@
 import type React from "react"
 import { Deck } from "@/types/deck"
 import { DeckResult } from "./deckElem"
-import { useEffect, useState } from "react"
+import {  useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -51,10 +51,9 @@ export const DeckGrid: React.FC<DecksGridProps> = ({ results, onDeckClick }) => 
     setDeckForm(!deckForm)
   }
   const handleNewDeck = () => {
-    useEffect(() => {
-        postDeck()
-    })
-    handleDeckForm
+    postDeck()
+    handleDeckForm()
+    window.location.reload()
   }
 
   if (results.length === 0) {
