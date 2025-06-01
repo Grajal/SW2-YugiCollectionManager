@@ -1,15 +1,17 @@
-version: "3.9"
-
 services:
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
     container_name: yugi_frontend
     ports:
-      - "3000:3000"
+      - '5173:80'
     depends_on:
       - backend
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
     networks:
       - yuginet
 
@@ -22,7 +24,7 @@ services:
       POSTGRES_PASSWORD: ${PGPASSWORD}
       POSTGRES_DB: ${PGDATABASE}
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -43,8 +45,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
     ports:
-      - "8080:8080"
-    command: ["./yugi"]
+      - '8080:8080'
+    command: ['./yugi']
 
 volumes:
   postgres_data:
