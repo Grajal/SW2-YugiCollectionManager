@@ -1,5 +1,3 @@
-import { WalletCardsIcon as Cards } from "lucide-react"
-import { AuthModal } from "@/components/auth/AuthModal"
 import { Header } from "@/components/landing/header"
 import Hero from "@/components/landing/hero"
 
