@@ -1,25 +1,30 @@
 import { Header } from "@/components/landing/header"
 import Hero from "@/components/landing/hero"
+import { useEffect } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL
 
 export default function LandingPage() {
 
-  const fetchCollection = async() => {
-    try{
-      const response = await fetch(`${API_URL}/cards/`,{
+  const fetchCollection = async () => {
+    try {
+      const response = await fetch(`${API_URL}/cards/`, {
         method: 'GET',
         credentials: 'include',
       })
-      if(!response.ok){
-        throw new Error("Error al cargar los datos");
+      if (!response.ok) {
+        throw new Error("Error al cargar los datos")
       }
-      const data = await response.json();
+      const data = await response.json()
       console.log(data)
-    }catch(error){
+    } catch (error) {
       console.error(error)
     }
   }
+
+  useEffect(() => {
+    fetchCollection()
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">

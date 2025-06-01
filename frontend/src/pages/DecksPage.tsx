@@ -11,83 +11,83 @@ import UploadYDKDialog from "@/components/ui/import"
 const API_URL = import.meta.env.VITE_API_URL
 
 export default function Decks() {
-    const {user} = useUser()
-    const [decks,setDecks] = useState<Deck[]>([])
-    const [deckEditor, setDeckEditor] = useState<Boolean>(true)
-    const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null)
-    const [mainDeck, setMainDeck] = useState<CardDeck[]>([])
-    const [extraDeck, setExtraDeck] = useState<CardDeck[]>([])
-    const [sideDeck, setSideDeck] = useState<CardDeck[]>([])
-    const [selectedCard, setSelectedCard] = useState<CardDeck | null>(null)
-    const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false)
-    const [isImportOpen, setIsImportOpen] = useState<boolean>(false)
+  const { user } = useUser()
+  const [decks, setDecks] = useState<Deck[]>([])
+  const [deckEditor, setDeckEditor] = useState<boolean>(true)
+  const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null)
+  const [mainDeck, setMainDeck] = useState<CardDeck[]>([])
+  const [extraDeck, setExtraDeck] = useState<CardDeck[]>([])
+  const [sideDeck, setSideDeck] = useState<CardDeck[]>([])
+  const [selectedCard, setSelectedCard] = useState<CardDeck | null>(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false)
+  const [isImportOpen, setIsImportOpen] = useState<boolean>(false)
 
-    const fetchDecks = async() => {
-    try{
-      const response = await fetch(`${API_URL}/decks/`,{
+  const fetchDecks = async () => {
+    try {
+      const response = await fetch(`${API_URL}/decks/`, {
         method: 'GET',
         credentials: 'include',
       })
-      if(!response.ok){
-        throw new Error("Error al cargar los datos");
+      if (!response.ok) {
+        throw new Error("Error al cargar los datos")
       }
-      const data = await response.json();
+      const data = await response.json()
       setDecks(data)
       console.log(data)
-    }catch(error){
+    } catch (error) {
       console.error("ERROR CARGANDO DECKS: " + error)
     }
   }
 
-  const importDeck = async(selectedFile: File) => {
+  const importDeck = async (selectedFile: File) => {
     const formData = new FormData()
     formData.append("file", selectedFile)
-    try{
-      const response = await fetch(`${API_URL}/decks/import/${selectedDeck?.ID}`,{
+    try {
+      const response = await fetch(`${API_URL}/decks/import/${selectedDeck?.ID}`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
       })
-      if(!response.ok){
-        throw new Error("Error al cargar los datos");
+      if (!response.ok) {
+        throw new Error("Error al cargar los datos")
       }
-    }catch(error){
+    } catch (error) {
       console.error(error)
     }
   }
 
   const handleDeckCards = () => {
-    try{
-        var main:CardDeck[] = []
-        var extra:CardDeck[] = []
-        var side:CardDeck[] = []
-        selectedDeck?.DeckCards.forEach(element => {
-            switch (element.Zone) {
-              case "main":
-                main.push(element)
-                break;
+    try {
+      const main: CardDeck[] = []
+      const extra: CardDeck[] = []
+      const side: CardDeck[] = []
+      selectedDeck?.DeckCards.forEach(element => {
+        switch (element.Zone) {
+          case "main":
+            main.push(element)
+            break
 
-              case "extra":
-                extra.push(element)
-                break;
-            
-              default:
-                side.push(element)
-                break;
-            }
-        });
-        setMainDeck(main)
-        setExtraDeck(extra)
-        setSideDeck(side)
-    }catch(error){
-        console.error(error)
+          case "extra":
+            extra.push(element)
+            break
+
+          default:
+            side.push(element)
+            break
+        }
+      })
+      setMainDeck(main)
+      setExtraDeck(extra)
+      setSideDeck(side)
+    } catch (error) {
+      console.error(error)
     }
   }
 
-  const handleDeckClick = (deck:Deck) => {
+  const handleDeckClick = (deck: Deck) => {
     setSelectedDeck(deck)
-    if(!deckEditor){
-        setDeckEditor(true)
+    if (!deckEditor) {
+      setDeckEditor(true)
     }
   }
 
@@ -96,117 +96,117 @@ export default function Decks() {
     setSelectedCard(null)
   }
 
- const removeCard = async(numE?: number) => {
-  if (selectedCard && selectedCard.Quantity > 0) {
-    try {
-    const response = await fetch(`${API_URL}/decks/${selectedDeck?.ID}/cards/${selectedCard.CardID}`, {
-      method: 'DELETE',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        quantity: numE === undefined? 1:numE,
-      }),
-    })
+  const removeCard = async (numE?: number) => {
+    if (selectedCard && selectedCard.Quantity > 0) {
+      try {
+        const response = await fetch(`${API_URL}/decks/${selectedDeck?.ID}/cards/${selectedCard.CardID}`, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            quantity: numE === undefined ? 1 : numE,
+          }),
+        })
 
-    const data = await response.json()
+        const data = await response.json()
 
-    if (!response.ok) {
-      throw new Error(data.error || 'Error removing card')
+        if (!response.ok) {
+          throw new Error(data.error || 'Error removing card')
+        }
+        fetchDecks()
+        handleDeckCards()
+      } catch (error) {
+        console.error('Failed to remove card:', error)
+      }
     }
-    fetchDecks()
-    handleDeckCards()
-  } catch (error) {
-    console.error('Failed to remove card:', error)
   }
-  }
-}
 
-const addCard = async(numE?: number) => {
-  if (selectedCard && selectedCard.Quantity > 0) {
-    try {
-    const response = await fetch(`${API_URL}/decks/${selectedDeck?.ID}/cards`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        card_id: selectedCard.CardID,
-        quantity: numE === undefined? 1:numE,
-      }),
-    })
+  const addCard = async (numE?: number) => {
+    if (selectedCard && selectedCard.Quantity > 0) {
+      try {
+        const response = await fetch(`${API_URL}/decks/${selectedDeck?.ID}/cards`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            card_id: selectedCard.CardID,
+            quantity: numE === undefined ? 1 : numE,
+          }),
+        })
 
-    const data = await response.json()
+        const data = await response.json()
 
-    if (!response.ok) {
-      throw new Error(data.error || 'Error adding card')
+        if (!response.ok) {
+          throw new Error(data.error || 'Error adding card')
+        }
+        fetchDecks()
+        handleDeckCards()
+      } catch (error) {
+        console.error('Failed to add card:', error)
+      }
     }
-    fetchDecks()
-    handleDeckCards()
-  } catch (error) {
-    console.error('Failed to add card:', error)
   }
-  }
-}
 
- const handleCardClick = (card:CardDeck) => {
+  const handleCardClick = (card: CardDeck) => {
     setSelectedCard(card)
     setIsSidebarOpen(true)
- }
+  }
 
- const handleImportClick = () => {
+  const handleImportClick = () => {
     setIsImportOpen(!isImportOpen)
     console.log(isImportOpen)
- }
-
- const exportDeck = async () => {
-  if (!selectedDeck) return
-
-  try {
-    const response = await fetch(`${API_URL}/decks/export/${selectedDeck.ID}`, {
-      method: 'POST',
-      credentials: 'include',
-    })
-
-    if (!response.ok) {
-      throw new Error('Error exportando el deck')
-    }
-
-    const blob = await response.blob()
-    const url = window.URL.createObjectURL(blob)
-
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${selectedDeck.Name}.ydk`
-    a.click()
-    window.URL.revokeObjectURL(url)
-  } catch (error) {
-    console.error('Error exportando el deck:', error)
   }
-}
+
+  const exportDeck = async () => {
+    if (!selectedDeck) return
+
+    try {
+      const response = await fetch(`${API_URL}/decks/export/${selectedDeck.ID}`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error('Error exportando el deck')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${selectedDeck.Name}.ydk`
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error exportando el deck:', error)
+    }
+  }
 
 
   useEffect(() => {
     if (selectedDeck || selectedCard?.Quantity) {
-        handleDeckCards()
+      handleDeckCards()
     }
-    }, [selectedDeck])
+  }, [selectedDeck])
 
-    
 
-    return (
-        <div className="min-h-screen bg-gray-900 text-gray-100" onLoad={fetchDecks}>
-            <Header username={user?.Username || ''}/>
-            <DeckGrid results={decks} onDeckClick={handleDeckClick}></DeckGrid>
-            {deckEditor && selectedDeck != null && (selectedDeck.DeckCards.length === 0? <button onClick={handleImportClick} className="ww-full cursor-pointer bg-white-600 hover:bg-white-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out">Importar</button>: <button onClick={exportDeck} className="ww-full cursor-pointer bg-white-600 hover:bg-white-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out">Exportar</button>)}
-            {deckEditor && selectedDeck != null && (<DeckViewer deck={selectedDeck} mainDeck={mainDeck} extraDeck={extraDeck} sideDeck={sideDeck} onCardClick={(card) => {handleCardClick(card)}}></DeckViewer>)}
-            {selectedCard != null && (<Sidebar type="deck" card={selectedCard.Card} isOpen={isSidebarOpen} onClose={handleSidebarClose} onAction={(quantity) => {removeCard(quantity)}} onAdd={(quantity) => {addCard(quantity)}}></Sidebar>)}
-            {isImportOpen && (<UploadYDKDialog open={isImportOpen}
-            onOpenChange={setIsImportOpen}
-            onFileSelected={(file) => {importDeck(file)}}>
-            </UploadYDKDialog>)}
-        </div>
-    )
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-gray-100" onLoad={fetchDecks}>
+      <Header username={user?.Username || ''} />
+      <DeckGrid results={decks} onDeckClick={handleDeckClick}></DeckGrid>
+      {deckEditor && selectedDeck != null && (selectedDeck.DeckCards.length === 0 ? <button onClick={handleImportClick} className="ww-full cursor-pointer bg-white-600 hover:bg-white-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out">Importar</button> : <button onClick={exportDeck} className="ww-full cursor-pointer bg-white-600 hover:bg-white-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out">Exportar</button>)}
+      {deckEditor && selectedDeck != null && (<DeckViewer deck={selectedDeck} mainDeck={mainDeck} extraDeck={extraDeck} sideDeck={sideDeck} onCardClick={(card) => { handleCardClick(card) }}></DeckViewer>)}
+      {selectedCard != null && (<Sidebar type="deck" card={selectedCard.Card} isOpen={isSidebarOpen} onClose={handleSidebarClose} onAction={(quantity) => { removeCard(quantity) }} onAdd={(quantity) => { addCard(quantity) }} onAddToCollection={() => { }} onQuantityChange={() => { }}></Sidebar>)}
+      {isImportOpen && (<UploadYDKDialog open={isImportOpen}
+        onOpenChange={setIsImportOpen}
+        onFileSelected={(file) => { importDeck(file) }}>
+      </UploadYDKDialog>)}
+    </div>
+  )
 }

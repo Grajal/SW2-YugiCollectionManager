@@ -14,11 +14,10 @@ interface DetailsSidebarProps {
   onAction: (quantity?: number) => void
   onAdd?: (quantity: number) => void
   onAddToCollection: (card: SearchResult) => void
-  quantity: number
   onQuantityChange: (quantity: number) => void
 }
 
-export const Sidebar: React.FC<DetailsSidebarProps> = ({ type="search", card, isOpen, onClose, onAction, onAdd, onAddToCollection, quantity, onQuantityChange }) => {
+export const Sidebar: React.FC<DetailsSidebarProps> = ({ type = "search", card, isOpen, onClose, onAction, onAdd, onAddToCollection, onQuantityChange }) => {
 
   // Bloquear el scroll del body cuando el sidebar está abierto
   useEffect(() => {
@@ -35,7 +34,7 @@ export const Sidebar: React.FC<DetailsSidebarProps> = ({ type="search", card, is
 
   const [quantity, setQuantity] = useState(1)
   const isCardDeck = (card: SearchResult | CardDeck): card is CardDeck => {
-  return (card as CardDeck).Quantity !== undefined
+    return (card as CardDeck).Quantity !== undefined
   }
 
 
@@ -136,37 +135,37 @@ export const Sidebar: React.FC<DetailsSidebarProps> = ({ type="search", card, is
               )}
               {type === "deck" && onAdd != undefined && <div>
                 <div>
-                <input
-                type="number"
-                min={1}
-                max={isCardDeck(card) ? card.Quantity : 1}
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-                className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-                <button
-                onClick={() => onAction(quantity)}
-                className="w-full cursor-pointer bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
-              >
-                Eliminar
-              </button>
-              </div>
-              <div>
-                <input
-                type="number"
-                min={1}
-                max={isCardDeck(card) ? 3-card.Quantity : 1}
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-                className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-                <button
-                onClick={() => onAdd(quantity)}
-                className="w-full cursor-pointer bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
-              >
-                Añadir
-              </button>
-              </div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={isCardDeck(card) ? card.Quantity : 1}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <button
+                    onClick={() => onAction(quantity)}
+                    className="w-full cursor-pointer bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={isCardDeck(card) ? 3 - card.Quantity : 1}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <button
+                    onClick={() => onAdd(quantity)}
+                    className="w-full cursor-pointer bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
+                  >
+                    Añadir
+                  </button>
+                </div>
               </div>}
             </div>
           </div>

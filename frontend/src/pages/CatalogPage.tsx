@@ -224,7 +224,7 @@ export default function CatalogPage() {
         isOpen={isSidebarOpen}
         onClose={closeSidebar}
         onAddToCollection={(card) => handleAddToCollection(card, quantity)}
-        quantity={quantity}
+        onAction={() => { }}
         onQuantityChange={setQuantity}
       />
     </div>

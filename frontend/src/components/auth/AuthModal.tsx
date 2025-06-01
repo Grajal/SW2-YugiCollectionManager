@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -21,8 +20,8 @@ export function AuthModal() {
     <Dialog>
       <DialogTrigger asChild>
         <a className="text-sm/6 font-semibold text-white">
-            Inicio Sesión
-          </a>
+          Inicio Sesión
+        </a>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
