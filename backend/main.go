@@ -48,7 +48,6 @@ func main() {
 	cardService := services.NewCardService(cardRepo, cardFactory)
 	cardHandler := handlers.NewCardHandler(cardService)
 
-
 	deckRepo := repository.NewDeckRepository()
 	deckCardRepo := repository.NewDeckCardRepository()
 	deckCardService := services.NewDeckCardService(deckCardRepo)
@@ -58,7 +57,6 @@ func main() {
 	collectionRepo := repository.NewCollectionRepository()
 	collectionService := services.NewCollectionService(collectionRepo)
 	collectionHandler := handlers.NewCollectionHandler(collectionService)
-
 
 	router := gin.Default()
 	allowedOrigins := "http://localhost:5173,https://sw-2-yugi-collection-manager.vercel.app"
@@ -83,12 +81,6 @@ func main() {
 	collections := api.Group("/collections")
 	collections.Use(middleware.AuthMiddleware())
 	routes.RegisterCollectionRoutes(collections, collectionHandler)
-
-	auth := api.Group("/auth")
-	{
-		auth.POST("/login", handlers.Login)
-		auth.POST("/register", handlers.Register)
-	}
 
 	if err := router.Run(":" + port); err != nil {
 		panic("Failed to start server: " + err.Error())
