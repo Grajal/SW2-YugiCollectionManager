@@ -7,6 +7,7 @@ import (
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/repository"
 	"gorm.io/gorm"
 )
 
@@ -23,68 +24,72 @@ const (
 	MaxCopiesPerCard = 3
 )
 
-// func AddCardToDeck(userID uint, deckID uint, cardID uint, quantity int) (*models.DeckCard, error) {
-// 	if quantity <= 0 {
-// 		return nil, errors.New("quantity must be grater than 0")
-// 	}
+// DeckCardService defines operations related to managing cards within a deck.
+type DeckCardService interface {
+	AddCardToDeck(userID, deckID uint, card *models.Card, quantity int) error
+	RemoveCardFromDeck(userID, deckID, cardID uint, quantity int) error
+}
 
-// 	deck, err := getDeckByIDAndUserID(deckID, userID)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("deck not found or unauthorized: %w", err)
-// 	}
+type deckCardService struct {
+	repo repository.DeckCardRepository
+}
 
-// 	card, err := GetCardByID(cardID)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("card not found: %w", err)
-// 	}
+// NewDeckCardService creates a new instance of deckCardService.
+func NewDeckCardService(repo repository.DeckCardRepository) DeckCardService {
+	return &deckCardService{
+		repo: repo,
+	}
+}
 
-// 	zone := GetZoneFromCard(card)
+// AddCardToDeck adds a given quantity of a card to the deck,
+// validating deck size and card copy constraints.
+func (s *deckCardService) AddCardToDeck(userID, deckID uint, card *models.Card, quantity int) error {
+	if quantity <= 0 {
+		return fmt.Errorf("invalid quantity: must be greater than 0")
+	}
 
-// 	if err := ValidateDeckCardCount(deck.ID, zone, quantity); err != nil {
-// 		return nil, err
-// 	}
+	zone := GetZoneFromCard(card)
 
-// 	if err := ValidateCardCopyLimit(deck.ID, card.ID, quantity); err != nil {
-// 		return nil, err
-// 	}
+	// Validaciones
+	if err := ValidateDeckCardCount(deckID, zone, quantity); err != nil {
+		return fmt.Errorf("deck size validation failed: %w", err)
+	}
+	if err := ValidateCardCopyLimit(deckID, card.ID, quantity); err != nil {
+		return fmt.Errorf("copy limit validation failed: %w", err)
+	}
 
-// 	var existing models.DeckCard
-// 	err = database.DB.Preload("Card").
-// 		Preload("Card.MonsterCard").
-// 		Preload("Card.SpellTrapCard").
-// 		Preload("Card.LinkMonsterCard").
-// 		Preload("Card.PendulumMonsterCard").Where("deck_id = ? AND card_id = ?", deck.ID, card.ID).First(&existing).Error
+	// Persistencia
+	if err := s.repo.AddCardToDeck(deckID, card.ID, quantity, zone); err != nil {
+		return fmt.Errorf("failed to add card to deck: %w", err)
+	}
 
-// 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-// 		return nil, fmt.Errorf("failed to query card: %w", err)
-// 	}
+	return nil
+}
 
-// 	if existing.DeckID != 0 && existing.CardID != 0 {
-// 		existing.Quantity += quantity
-// 		if err := database.DB.Save(&existing).Error; err != nil {
-// 			return nil, fmt.Errorf("failed to update card quantity: %w", err)
-// 		}
-// 		return &existing, nil
-// 	}
+// RemoveCardFromDeck removes a quantity of a card from a deck.
+// Deletes the card if the resulting quantity is zero or less.
+func (s *deckCardService) RemoveCardFromDeck(userID, deckID, cardID uint, quantity int) error {
+	entry, err := s.repo.GetDeckCard(deckID, cardID)
+	if err != nil {
+		return fmt.Errorf("card not found in deck: %w", err)
+	}
 
-// 	newEntry := models.DeckCard{
-// 		DeckID:   deckID,
-// 		CardID:   card.ID,
-// 		Quantity: quantity,
-// 		Zone:     zone,
-// 	}
+	if quantity >= entry.Quantity {
+		if err := s.repo.DeleteDeckCard(entry); err != nil {
+			return fmt.Errorf("failed to delete card: %w", err)
+		}
+	} else {
+		entry.Quantity -= quantity
+		if err := s.repo.UpdateDeckCardQuantity(entry); err != nil {
+			return fmt.Errorf("failed to update quantity: %w", err)
+		}
+	}
 
-// 	if err := database.DB.Preload("Card").
-// 		Preload("Card.MonsterCard").
-// 		Preload("Card.SpellTrapCard").
-// 		Preload("Card.LinkMonsterCard").
-// 		Preload("Card.PendulumMonsterCard").Create(&newEntry).Error; err != nil {
-// 		return nil, fmt.Errorf("failed to add card to deck: %w", err)
-// 	}
+	return nil
+}
 
-// 	return &newEntry, nil
-// }
-
+// GetZoneFromCard determines whether a card belongs to the "main" or "extra" zone
+// based on its frame type.
 func GetZoneFromCard(card *models.Card) string {
 	switch card.FrameType {
 	case "link", "xyz", "fusion", "synchro":
@@ -94,35 +99,8 @@ func GetZoneFromCard(card *models.Card) string {
 	}
 }
 
-func RemoveCardFromDeck(userID, deckID, cardID uint, quantity int) error {
-	deck, err := getDeckByIDAndUserID(deckID, userID)
-	if err != nil {
-		return fmt.Errorf("deck not found or unathorized: %w", err)
-	}
-
-	var entry models.DeckCard
-	err = database.DB.Where("deck_id = ? AND card_id = ?", deck.ID, cardID).First(&entry).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fmt.Errorf("card not found in deck")
-		}
-		return fmt.Errorf("error fetching card from deck: %w", err)
-	}
-
-	if quantity >= entry.Quantity {
-		if err := database.DB.Delete(&entry).Error; err != nil {
-			return fmt.Errorf("failed to delete card from deck: %w", err)
-		}
-	} else {
-		entry.Quantity -= quantity
-		if err := database.DB.Save(&entry).Error; err != nil {
-			return fmt.Errorf("failed to update card quantity: %w", err)
-		}
-	}
-
-	return nil
-}
-
+// ValidateDeckCardCount checks if adding a number of cards to the given zone
+// would exceed the allowed deck size.
 func ValidateDeckCardCount(deckID uint, zone string, newCards int) error {
 	var total sql.NullInt64
 	query := database.DB.Model(&models.DeckCard{}).Where("deck_id = ? AND zone = ?", deckID, zone).Select("SUM(quantity)").Scan(&total)
@@ -144,6 +122,8 @@ func ValidateDeckCardCount(deckID uint, zone string, newCards int) error {
 	return nil
 }
 
+// ValidateCardCopyLimit ensures that adding new copies of a card
+// does not exceed the maximum allowed per deck.
 func ValidateCardCopyLimit(deckID, cardID uint, quantityToAdd int) error {
 	var existing models.DeckCard
 	err := database.DB.Where("deck_id = ? AND card_id = ?", deckID, cardID).First(&existing).Error

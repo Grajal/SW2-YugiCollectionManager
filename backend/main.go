@@ -39,10 +39,20 @@ func main() {
 		panic("Failed to migrate database: " + err.Error())
 	}
 
+	userRepo := repository.NewUserRepository()
+	authServices := services.NewAuthService(userRepo)
+	authHandler := handlers.NewAuthHandler(authServices)
+
 	cardRepo := repository.NewCardRepository()
 	cardFactory := services.NewCardFactory()
 	cardService := services.NewCardService(cardRepo, cardFactory)
 	cardHandler := handlers.NewCardHandler(cardService)
+
+	deckRepo := repository.NewDeckRepository()
+	deckCardRepo := repository.NewDeckCardRepository()
+	deckCardService := services.NewDeckCardService(deckCardRepo)
+	deckService := services.NewDeckService(deckRepo, cardService, deckCardService)
+	deckHandler := handlers.NewDeckHandler(deckService)
 
 	collectionRepo := repository.NewCollectionRepository()
 	collectionService := services.NewCollectionService(collectionRepo)
@@ -64,17 +74,13 @@ func main() {
 	router.Use(cors.New(config))
 
 	api := router.Group("/api")
+	routes.RegisterAuthRoutes(api, authHandler)
 	routes.RegisterCardRoutes(api, cardHandler)
+	routes.RegisterDeckRoutes(api, deckHandler)
 
 	collections := api.Group("/collections")
 	collections.Use(middleware.AuthMiddleware())
 	routes.RegisterCollectionRoutes(collections, collectionHandler)
-
-	auth := api.Group("/auth")
-	{
-		auth.POST("/login", handlers.Login)
-		auth.POST("/register", handlers.Register)
-	}
 
 	if err := router.Run(":" + port); err != nil {
 		panic("Failed to start server: " + err.Error())

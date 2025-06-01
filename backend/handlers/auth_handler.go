@@ -4,12 +4,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/services"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/utils"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type RegisterInput struct {
@@ -17,21 +14,40 @@ type RegisterInput struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
+
 type LoginInput struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
-// Login handles user login requests
-func Login(c *gin.Context) {
-	var input LoginInput
+// AuthHandler defines the interface for authentication-related endpoints.
+type AuthHandler interface {
+	Login(c *gin.Context)
+	Register(c *gin.Context)
+	GetCurrentUser(c *gin.Context)
+}
 
+type authHandler struct {
+	authService services.AuthService
+}
+
+// NewAuthHandler creates a new instance of AuthHandler with the given AuthService.
+func NewAuthHandler(authService services.AuthService) AuthHandler {
+	return &authHandler{
+		authService: authService,
+	}
+}
+
+// Login handles user login, validates credentials, generates a JWT token,
+// and sets it as a cookie in the response.
+func (h *authHandler) Login(c *gin.Context) {
+	var input LoginInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
-	user, err := services.AuthenticateUser(input.Username, input.Password)
+	user, err := h.authService.Login(input.Username, input.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
@@ -43,7 +59,6 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	user.Password = ""
 	domain := os.Getenv("COOKIE_DOMAIN")
 	if domain == "" {
 		domain = "localhost"
@@ -59,36 +74,23 @@ func Login(c *gin.Context) {
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
 	})
+
+	user.Password = ""
 	c.JSON(http.StatusOK, gin.H{"message": "login successful", "user": user})
 }
 
-func Register(c *gin.Context) {
+// Register handles new user registration, validates the input,
+// and creates a new user if username/email is not already taken.
+func (h *authHandler) Register(c *gin.Context) {
 	var input RegisterInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
-	var existingUser models.User
-	if err := database.DB.Where("username = ?", input.Username).Or("email = ?", input.Email).First(&existingUser).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Username or email already exists"})
-		return
-	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+	user, err := h.authService.Register(input.Username, input.Email, input.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
-		return
-	}
-
-	user := models.User{
-		Username: input.Username,
-		Email:    input.Email,
-		Password: string(hashedPassword),
-	}
-
-	if err := database.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -96,16 +98,12 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully", "user": user})
 }
 
-func GetCurrentUser(c *gin.Context) {
-	userID, ok := c.MustGet("user_id").(uint)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID"})
-		return
-	}
-
-	var user models.User
-	if err := database.DB.Preload("Collection.Card").Preload("Collection").Preload("Decks").First(&user, userID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
+// GetCurrentUser retrieves the currently authenticated user from the request context.
+func (h *authHandler) GetCurrentUser(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
+	user, err := h.authService.GetUserByID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

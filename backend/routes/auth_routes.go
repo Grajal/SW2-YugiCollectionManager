@@ -6,9 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterCardRoutes(rg *gin.RouterGroup, h handlers.CardHandler) {
+func RegisterAuthRoutes(rg *gin.RouterGroup, h handlers.AuthHandler) {
+	rg.POST("/auth/login", h.Login)
+	rg.POST("/auth/register", h.Register)
 	rg.Use(middleware.AuthMiddleware())
-	rg.GET("/cards/:param", h.GetCardByParam)
-	rg.GET("/cards", h.GetCards)
-	rg.GET("/cards/search", h.SearchCards)
+	rg.GET("/auth/me", h.GetCurrentUser)
 }
