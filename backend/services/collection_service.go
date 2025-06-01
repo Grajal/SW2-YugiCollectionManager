@@ -4,79 +4,68 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/repository"
 	"gorm.io/gorm"
 )
 
-// GetCollectionByUserID retrieves the full collection of cards for a user,
-// including all subtypes of the cards (Monster, Spell/Trap, Link, Pendulum).
-func GetCollectionByUserID(userID uint) ([]models.UserCard, error) {
-	var userCards []models.UserCard
-
-	err := database.DB.
-		Preload("Card").
-		Preload("Card.MonsterCard").
-		Preload("Card.SpellTrapCard").
-		Preload("Card.LinkMonsterCard").
-		Preload("Card.PendulumMonsterCard").
-		Where("user_id = ?", userID).
-		Find(&userCards).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	return userCards, nil
+type CollectionService interface {
+	GetUserCollection(userID uint) ([]models.UserCard, error)
+	AddCardToCollection(userID uint, cardID uint, quantity int) error
+	RemoveCardFromCollection(userID, cardID uint) error
+	DecreaseCardQuantity(userID, cardID uint, quantityToRemove int) error
 }
 
-// AddCardToCollection adds a card to the user's collection or updates the quantity if the card already exists.
-// It first checks if a UserCard record exists for the given user ID and card ID.
-// If the record exists, it increments the quantity and saves the updated record.
-// If the record does not exist, it creates a new UserCard record with the specified quantity.
-// Returns an error if the database operation fails.
-func AddCardToCollection(userID uint, cardID uint, quantity int) error {
-	var userCard models.UserCard
+type collectionService struct {
+	repo repository.CollectionRepository
+}
 
-	err := database.DB.Where("user_id = ? AND card_id = ?", userID, cardID).First(&userCard).Error
-	if err == nil {
-		// Card already exists in the collection, update the quantity
-		userCard.Quantity += quantity
-		return database.DB.Save(&userCard).Error
+func NewCollectionService(repo repository.CollectionRepository) CollectionService {
+	return &collectionService{repo: repo}
+}
+
+func (s *collectionService) GetUserCollection(userID uint) ([]models.UserCard, error) {
+	collection, err := s.repo.GetUserCollection(userID)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch collection for user %d: %w", userID, err)
+	}
+	return collection, nil
+}
+
+func (s *collectionService) AddCardToCollection(userID uint, cardID uint, quantity int) error {
+	if quantity <= 0 {
+		return fmt.Errorf("quantity must be greater than zero")
 	}
 
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		newUserCard := models.UserCard{
-			UserID:   userID,
-			CardID:   cardID,
-			Quantity: quantity,
+	err := s.repo.AddCardToCollection(userID, cardID, quantity)
+	if err != nil {
+		return fmt.Errorf("failed to add card %d to user %d's collection: %w", cardID, userID, err)
+	}
+	return nil
+}
+
+func (s *collectionService) RemoveCardFromCollection(userID, cardID uint) error {
+	err := s.repo.RemoveCardFromCollection(userID, cardID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("card %d not found in user %d's collection", cardID, userID)
 		}
+		return fmt.Errorf("failed to remove card %d from user %d's collection: %w", cardID, userID, err)
+	}
+	return nil
+}
 
-		return database.DB.Create(&newUserCard).Error
+func (s *collectionService) DecreaseCardQuantity(userID, cardID uint, quantityToRemove int) error {
+	if quantityToRemove <= 0 {
+		return fmt.Errorf("quantity to remove must be greater than zero")
 	}
 
-	return err
-}
-
-// DeleteCardFromCollection removes a card from the user's collection.
-// It deletes the UserCard record that matches the given user ID and card ID.
-// Returns an error if the database operation fails.
-func DeleteCardFromCollection(userID, cardID uint) error {
-	return database.DB.Where("user_id = ? AND card_id = ?", userID, cardID).Delete(&models.UserCard{}).Error
-}
-
-func DeleteQuantityCardFromCollection(userID, cardID uint, quantityToRemove int) error {
-	var userCard models.UserCard
-
-	err := database.DB.Where("user_id= ? AND card_id = ?", userID, cardID).First(&userCard).Error
+	err := s.repo.DecreaseCardQuantity(userID, cardID, quantityToRemove)
 	if err != nil {
-		return fmt.Errorf("card not found in collection: %w", err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("card %d not found in user %d's collection", cardID, userID)
+		}
+		return fmt.Errorf("failed to decrease quantity of card %d in user %d's collection: %w", cardID, userID, err)
 	}
-
-	if userCard.Quantity > quantityToRemove {
-		userCard.Quantity -= quantityToRemove
-		return database.DB.Save(&userCard).Error
-	}
-
-	return database.DB.Delete(&userCard).Error
+	return nil
 }
