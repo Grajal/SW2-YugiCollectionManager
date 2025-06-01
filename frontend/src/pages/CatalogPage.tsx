@@ -28,11 +28,13 @@ export default function CatalogPage() {
   const [selectedCard, setSelectedCard] = useState<SearchResult | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false)
   const [quantity, setQuantity] = useState<number>(1)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const resultsPerPage = 50
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true)
       try {
         let effectiveApiUrl = `${API_URL}/cards/` // Default to fetching all cards
 
@@ -83,6 +85,8 @@ export default function CatalogPage() {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
         toast.error(`Error fetching cards: ${errorMessage}`)
         setCards([]) // Set to empty array on error
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -186,12 +190,21 @@ export default function CatalogPage() {
         <SearchBar onSearch={handleSearch} onFilterChange={handleFilterChange} filters={filters} />
 
         <div id="results-section" className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Resultados ({filteredResults.length})</h2>
+          <h2 className="text-xl font-semibold mb-4">Resultados ({isLoading ? '...' : filteredResults.length})</h2>
 
-          <ResultsGrid results={currentResults} onCardClick={handleCardClick} />
+          {isLoading ? (
+            <div className="text-center py-10">
+              <p className="text-lg text-gray-400">Cargando cartas...</p>
+              {/* You can add a spinner component here if you have one */}
+            </div>
+          ) : (
+            <>
+              <ResultsGrid results={currentResults} onCardClick={handleCardClick} />
 
-          {totalPages > 1 && (
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+              {totalPages > 1 && (
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+              )}
+            </>
           )}
         </div>
       </div>
