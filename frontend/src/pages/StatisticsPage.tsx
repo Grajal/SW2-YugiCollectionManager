@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts"
 import { Header } from "@/components/landing/header"
-import { useUser } from '@/contexts/UserContext'
+import { useUser } from '@/hooks/useUser'
 
 const API_URL = import.meta.env.VITE_API_URL
 
