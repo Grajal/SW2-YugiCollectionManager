@@ -11,6 +11,7 @@ import (
 
 type CollectionRepository interface {
 	GetUserCollection(userID uint) ([]models.UserCard, error)
+	GetUserCard(userID, cardID uint) (*models.UserCard, error)
 	AddCardToCollection(userID uint, cardID uint, quantity int) error
 	RemoveCardFromCollection(userID, cardID uint) error
 	DecreaseCardQuantity(userID, cardID uint, quantityToRemove int) error
@@ -39,6 +40,19 @@ func (r *collectionRepository) GetUserCollection(userID uint) ([]models.UserCard
 		Find(&userCards).Error
 
 	return userCards, err
+}
+
+func (r *collectionRepository) GetUserCard(userID, cardID uint) (*models.UserCard, error) {
+	var userCard models.UserCard
+	err := r.db.Preload("Card").
+		Preload("Card.MonsterCard").
+		Preload("Card.SpellTrapCard").
+		Preload("Card.LinkMonsterCard").
+		Preload("Card.PendulumMonsterCard").
+		Preload("User").
+		First(&userCard, "user_id = ? AND card_id = ?", userID, cardID).Error
+
+	return &userCard, err
 }
 
 func (r *collectionRepository) AddCardToCollection(userID uint, cardID uint, quantity int) error {

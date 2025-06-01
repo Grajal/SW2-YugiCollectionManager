@@ -11,6 +11,7 @@ import (
 
 type CollectionService interface {
 	GetUserCollection(userID uint) ([]models.UserCard, error)
+	GetUserCard(userID, cardID uint) (*models.UserCard, error)
 	AddCardToCollection(userID uint, cardID uint, quantity int) error
 	RemoveCardFromCollection(userID, cardID uint) error
 	DecreaseCardQuantity(userID, cardID uint, quantityToRemove int) error
@@ -30,6 +31,10 @@ func (s *collectionService) GetUserCollection(userID uint) ([]models.UserCard, e
 		return nil, fmt.Errorf("could not fetch collection for user %d: %w", userID, err)
 	}
 	return collection, nil
+}
+
+func (s *collectionService) GetUserCard(userID, cardID uint) (*models.UserCard, error) {
+	return s.repo.GetUserCard(userID, cardID)
 }
 
 func (s *collectionService) AddCardToCollection(userID uint, cardID uint, quantity int) error {

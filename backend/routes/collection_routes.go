@@ -10,6 +10,7 @@ func RegisterCollectionRoutes(rg *gin.RouterGroup, h handlers.CollectionHandler)
 	rg = rg.Group("/collections")
 	rg.Use(middleware.AuthMiddleware())
 	rg.GET("/", h.GetCollection)
+	rg.GET("/:cardId", h.GetCollectionCard)
 	rg.POST("/", h.AddCardToCollection)
 	rg.DELETE("/:cardId", h.DeleteQuantityFromCollection)
 }
