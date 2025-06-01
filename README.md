@@ -35,6 +35,7 @@ AWS_SECRET_ACCESS_KEY=your_secret_key_aws
 AWS_REGION=your_region_aws
 AWS_BUCKET_NAME=your_bucket_name
 COOKIE_DOMAIN=localhost
+VITE_API_URL=http://localhost:8080/api
 </pre>
 
 > ⚠️ If you use Railway or Render, you can set these variables in their dashboard. Locally you can set them in an `.env` or in the system environment. Make sure the bucket is created and has public object access enabled if you want to serve images directly from it.
@@ -44,10 +45,11 @@ COOKIE_DOMAIN=localhost
 ```bash
 docker-compose up --build
 ```
+
 This will lift:
 
-* PostgreSQL (yugi_postgres)
-* Backend (yugi_backend)
-* Frontend (yugi_frontend)
+- PostgreSQL (yugi_postgres)
+- Backend (yugi_backend)
+- Frontend (yugi_frontend)
 
-The backend will be available at http://localhost:8080 and the frontend at http://localhost:3000.
+The backend will be available at http://localhost:8080 and the frontend at http://localhost:5173.

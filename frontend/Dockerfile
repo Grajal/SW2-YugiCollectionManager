@@ -1,6 +1,9 @@
 # Etapa 1: Construcción
 FROM node:20-alpine AS builder
 
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
+
 # Establecer el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
@@ -21,7 +24,7 @@ FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copiar configuración personalizada de nginx si es necesario
-# COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Exponer el puerto
 EXPOSE 80

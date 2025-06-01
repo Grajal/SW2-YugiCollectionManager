@@ -2,29 +2,26 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/routes"
 )
 
-// port is the server port, defaults to 8080 if not set in environment
-var port = os.Getenv("PORT")
-
 func main() {
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
 	database.DBConnect()
 
-	if err := database.DB.AutoMigrate(models.User{}, models.Card{}, models.SpellTrapCard{}, models.MonsterCard{}, models.LinkMonsterCard{}, models.PendulumMonsterCard{}, models.UserCard{}, models.Deck{}, models.DeckCard{}); err != nil {
-		panic("Failed to migrate database: " + err.Error())
+	if err := database.AutoMigrate(); err != nil {
+		log.Fatalf("Failed to migrate databse: %v", err)
 	}
 
 	router := routes.SetupRouter()
-
 	if err := router.Run(":" + port); err != nil {
 		panic("Failed to start server: " + err.Error())
 	}

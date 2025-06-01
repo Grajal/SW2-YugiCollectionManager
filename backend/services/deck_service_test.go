@@ -6,6 +6,7 @@ import (
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/repository"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/utils"
 )
 
@@ -15,6 +16,10 @@ func TestCreateDeck(t *testing.T) {
 
 	user := &models.User{Username: "testuser", Email: "test@example.com", Password: "testpassword"}
 	utils.SeedTestData(db, user)
+
+	// Instanciamos el repositorio real con la DB de test
+	deckRepo := repository.NewDeckRepository()
+	deckService := NewDeckService(deckRepo, nil, nil) // Solo necesitas el repo aquí
 
 	type args struct {
 		userID      uint
@@ -75,7 +80,7 @@ func TestCreateDeck(t *testing.T) {
 				}
 			}
 
-			got, err := CreateDeck(tt.args.userID, tt.args.name, tt.args.description)
+			got, err := deckService.CreateDeck(tt.args.userID, tt.args.name, tt.args.description)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CreateDeck() error = %v, wantErr %v", err, tt.wantErr)
 				return

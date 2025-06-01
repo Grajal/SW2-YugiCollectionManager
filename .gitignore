@@ -9,21 +9,42 @@
 # Node (frontend)
 node_modules/
 dist/
+dist-ssr/
 pnpm-lock.yaml
-.env
-.vscode/
-*.log
+*.local
 
 # Go (backend)
 bin/
 vendor/
 *.tmp
-*.log
-.env
 
 # IDEs
 .idea/
-.vscode/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # Sistema
 Thumbs.db
+
+# Air tmp folder 
+tmp/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment
+.env
+
+#SonarQube
+.scannerwork
