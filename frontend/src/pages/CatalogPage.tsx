@@ -131,11 +131,13 @@ export default function CatalogPage() {
   const handleSearch = (query: string) => {
     setSearchQuery(query)
     setCurrentPage(1)
+    setIsLoading(true)
   }
 
   const handleFilterChange = (newFilters: FilterOptions) => {
     setFilters(newFilters)
     setCurrentPage(1)
+    setIsLoading(true)
   }
 
   const handleCardClick = (card: SearchResult) => {
