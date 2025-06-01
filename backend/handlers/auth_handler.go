@@ -20,6 +20,7 @@ type LoginInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// AuthHandler defines the interface for authentication-related endpoints.
 type AuthHandler interface {
 	Login(c *gin.Context)
 	Register(c *gin.Context)
@@ -30,12 +31,15 @@ type authHandler struct {
 	authService services.AuthService
 }
 
+// NewAuthHandler creates a new instance of AuthHandler with the given AuthService.
 func NewAuthHandler(authService services.AuthService) AuthHandler {
 	return &authHandler{
 		authService: authService,
 	}
 }
 
+// Login handles user login, validates credentials, generates a JWT token,
+// and sets it as a cookie in the response.
 func (h *authHandler) Login(c *gin.Context) {
 	var input LoginInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -75,6 +79,8 @@ func (h *authHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "login successful", "user": user})
 }
 
+// Register handles new user registration, validates the input,
+// and creates a new user if username/email is not already taken.
 func (h *authHandler) Register(c *gin.Context) {
 	var input RegisterInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -92,6 +98,7 @@ func (h *authHandler) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully", "user": user})
 }
 
+// GetCurrentUser retrieves the currently authenticated user from the request context.
 func (h *authHandler) GetCurrentUser(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 	user, err := h.authService.GetUserByID(userID)

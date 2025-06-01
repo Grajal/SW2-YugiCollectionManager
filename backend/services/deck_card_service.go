@@ -24,6 +24,7 @@ const (
 	MaxCopiesPerCard = 3
 )
 
+// DeckCardService defines operations related to managing cards within a deck.
 type DeckCardService interface {
 	AddCardToDeck(userID, deckID uint, card *models.Card, quantity int) error
 	RemoveCardFromDeck(userID, deckID, cardID uint, quantity int) error
@@ -33,12 +34,15 @@ type deckCardService struct {
 	repo repository.DeckCardRepository
 }
 
+// NewDeckCardService creates a new instance of deckCardService.
 func NewDeckCardService(repo repository.DeckCardRepository) DeckCardService {
 	return &deckCardService{
 		repo: repo,
 	}
 }
 
+// AddCardToDeck adds a given quantity of a card to the deck,
+// validating deck size and card copy constraints.
 func (s *deckCardService) AddCardToDeck(userID, deckID uint, card *models.Card, quantity int) error {
 	if quantity <= 0 {
 		return fmt.Errorf("invalid quantity: must be greater than 0")
@@ -62,6 +66,8 @@ func (s *deckCardService) AddCardToDeck(userID, deckID uint, card *models.Card, 
 	return nil
 }
 
+// RemoveCardFromDeck removes a quantity of a card from a deck.
+// Deletes the card if the resulting quantity is zero or less.
 func (s *deckCardService) RemoveCardFromDeck(userID, deckID, cardID uint, quantity int) error {
 	entry, err := s.repo.GetDeckCard(deckID, cardID)
 	if err != nil {
@@ -82,6 +88,8 @@ func (s *deckCardService) RemoveCardFromDeck(userID, deckID, cardID uint, quanti
 	return nil
 }
 
+// GetZoneFromCard determines whether a card belongs to the "main" or "extra" zone
+// based on its frame type.
 func GetZoneFromCard(card *models.Card) string {
 	switch card.FrameType {
 	case "link", "xyz", "fusion", "synchro":
@@ -91,6 +99,8 @@ func GetZoneFromCard(card *models.Card) string {
 	}
 }
 
+// ValidateDeckCardCount checks if adding a number of cards to the given zone
+// would exceed the allowed deck size.
 func ValidateDeckCardCount(deckID uint, zone string, newCards int) error {
 	var total sql.NullInt64
 	query := database.DB.Model(&models.DeckCard{}).Where("deck_id = ? AND zone = ?", deckID, zone).Select("SUM(quantity)").Scan(&total)
@@ -112,6 +122,8 @@ func ValidateDeckCardCount(deckID uint, zone string, newCards int) error {
 	return nil
 }
 
+// ValidateCardCopyLimit ensures that adding new copies of a card
+// does not exceed the maximum allowed per deck.
 func ValidateCardCopyLimit(deckID, cardID uint, quantityToAdd int) error {
 	var existing models.DeckCard
 	err := database.DB.Where("deck_id = ? AND card_id = ?", deckID, cardID).First(&existing).Error

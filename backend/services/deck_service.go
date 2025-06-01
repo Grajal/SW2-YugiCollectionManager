@@ -17,6 +17,7 @@ var ErrDeckAlreadyExists = errors.New("deck with the same name already exists")
 var ErrMaximumNumberOfDecks = errors.New("maximum number of decks reached")
 var ErrDeckNotFound = errors.New("deck not found")
 
+// DeckService defines operations related to creating, managing and importing/exporting decks.
 type DeckService interface {
 	CreateDeck(userID uint, name, description string) (*models.Deck, error)
 	GetDecksByUserID(userID uint) ([]models.Deck, error)
@@ -34,10 +35,12 @@ type deckService struct {
 	deckCardService DeckCardService
 }
 
+// NewDeckService creates a new instance of deckService.
 func NewDeckService(repo repository.DeckRepository, cardService CardService, deckCardService DeckCardService) DeckService {
 	return &deckService{repo, cardService, deckCardService}
 }
 
+// CreateDeck creates a new deck for the specified user, checking name uniqueness and deck count limit.
 func (s *deckService) CreateDeck(userID uint, name, description string) (*models.Deck, error) {
 	count, err := s.repo.CountByUserID(userID)
 	if err != nil {
@@ -68,10 +71,12 @@ func (s *deckService) CreateDeck(userID uint, name, description string) (*models
 	return deck, nil
 }
 
+// GetDecksByUserID returns all decks belonging to a given user.
 func (s *deckService) GetDecksByUserID(userID uint) ([]models.Deck, error) {
 	return s.repo.FindByUserID(userID)
 }
 
+// DeleteDeck deletes a deck by ID and user ID, returning an error if not found.
 func (s *deckService) DeleteDeck(deckID uint, userID uint) error {
 	err := s.repo.DeleteByIDAndUserID(deckID, userID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -80,10 +85,12 @@ func (s *deckService) DeleteDeck(deckID uint, userID uint) error {
 	return err
 }
 
+// GetCardsByDeck returns all cards contained in a user's deck.
 func (s *deckService) GetCardsByDeck(userID, deckID uint) ([]models.DeckCard, error) {
 	return s.repo.FindDeckCards(deckID, userID)
 }
 
+// ExportDeckAsYDK exports the deck to YDK format (used by Yu-Gi-Oh! simulators).
 func (s *deckService) ExportDeckAsYDK(userID, deckID uint) (string, error) {
 	deck, err := s.repo.FindByIDAndUserID(deckID, userID)
 	if err != nil {
@@ -115,6 +122,7 @@ func (s *deckService) ExportDeckAsYDK(userID, deckID uint) (string, error) {
 	return result, nil
 }
 
+// ImportDeckFromYDK imports a deck from a .ydk file, adding cards to the specified deck.
 func (s *deckService) ImportDeckFromYDK(userID, deckID uint, file multipart.File) error {
 	mainIDs, extraIDs, sideIDs, err := utils.ParseYDK(file)
 	if err != nil {
@@ -153,6 +161,7 @@ func (s *deckService) ImportDeckFromYDK(userID, deckID uint, file multipart.File
 	return nil
 }
 
+// AddCardToDeck adds a card to a deck using the CardService and DeckCardService.
 func (s *deckService) AddCardToDeck(userID, cardID, deckID uint, quantity int) error {
 	// Obtener la carta desde el servicio
 	card, err := s.cardService.GetCardByID(cardID)
@@ -169,6 +178,7 @@ func (s *deckService) AddCardToDeck(userID, cardID, deckID uint, quantity int) e
 	return nil
 }
 
+// RemoveCardFromDeck removes a card from a deck by delegating to DeckCardService.
 func (s *deckService) RemoveCardFromDeck(userID, deckID, cardID uint, quantity int) error {
 	return s.deckCardService.RemoveCardFromDeck(userID, deckID, cardID, quantity)
 }

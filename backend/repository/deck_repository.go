@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// DeckRepository defines the interface for deck-related database operations.
 type DeckRepository interface {
 	CountByUserID(userID uint) (int64, error)
 	ExistsByName(userID uint, name string) (bool, error)
@@ -23,6 +24,7 @@ type deckRepository struct {
 	db *gorm.DB
 }
 
+// NewDeckRepository creates a new instance of deckRepository using the default DB.
 func NewDeckRepository() DeckRepository {
 	return &deckRepository{
 		db: database.DB,

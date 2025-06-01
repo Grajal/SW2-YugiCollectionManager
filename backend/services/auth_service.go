@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// AuthService defines methods for authentication and user management.
 type AuthService interface {
 	Login(username, password string) (*models.User, error)
 	Register(username, email, password string) (*models.User, error)
@@ -19,10 +20,13 @@ type authService struct {
 	userRepo repository.UserRepository
 }
 
+// NewAuthService creates a new instance of authService with a given user repository.
 func NewAuthService(userRepo repository.UserRepository) AuthService {
 	return &authService{userRepo: userRepo}
 }
 
+// Login authenticates a user by their username and password.
+// Returns the user if credentials are correct.
 func (s *authService) Login(username, password string) (*models.User, error) {
 	var user models.User
 	if err := database.DB.Where("username = ?", username).First(&user).Error; err != nil {
@@ -36,6 +40,8 @@ func (s *authService) Login(username, password string) (*models.User, error) {
 	return &user, nil
 }
 
+// Register creates a new user after checking that the username or email does not exist.
+// Password is securely hashed before storing.
 func (s *authService) Register(username, email, password string) (*models.User, error) {
 	var existing models.User
 	if err := database.DB.Where("username = ?", username).Or("email = ?", email).First(&existing).Error; err == nil {
@@ -60,6 +66,7 @@ func (s *authService) Register(username, email, password string) (*models.User, 
 	return &user, nil
 }
 
+// GetUserByID retrieves a user by ID, preloading collection and decks.
 func (s *authService) GetUserByID(id uint) (*models.User, error) {
 	var user models.User
 	if err := database.DB.Preload("Collection.Card").

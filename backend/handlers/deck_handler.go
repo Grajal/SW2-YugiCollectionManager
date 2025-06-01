@@ -24,6 +24,7 @@ type RemoveCardRequest struct {
 	Quantity int `json:"quantity" binding:"required"`
 }
 
+// DeckHandler defines the handler interface for deck-related routes.
 type DeckHandler interface {
 	CreateDeck(c *gin.Context)
 	GetUserDecks(c *gin.Context)
@@ -39,12 +40,14 @@ type deckHandler struct {
 	deckService services.DeckService
 }
 
+// NewDeckHandler creates a new instance of DeckHandler with the provided service.
 func NewDeckHandler(deckService services.DeckService) DeckHandler {
 	return &deckHandler{
 		deckService: deckService,
 	}
 }
 
+// CreateDeck handles the creation of a new deck for the authenticated user.
 func (h *deckHandler) CreateDeck(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 
@@ -67,6 +70,7 @@ func (h *deckHandler) CreateDeck(c *gin.Context) {
 	c.JSON(http.StatusCreated, deck)
 }
 
+// GetUserDecks returns all decks associated with the authenticated user.
 func (h *deckHandler) GetUserDecks(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -83,6 +87,7 @@ func (h *deckHandler) GetUserDecks(c *gin.Context) {
 	c.JSON(http.StatusOK, decks)
 }
 
+// DeleteDeck deletes a deck by its ID, ensuring it belongs to the authenticated user.
 func (h *deckHandler) DeleteDeck(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 	deckIDStr := c.Param("deckId")
@@ -106,6 +111,7 @@ func (h *deckHandler) DeleteDeck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "deck deleted successfully"})
 }
 
+// GetCardByDeck returns all cards associated with a given deck.
 func (h *deckHandler) GetCardByDeck(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 
@@ -125,6 +131,7 @@ func (h *deckHandler) GetCardByDeck(c *gin.Context) {
 	c.JSON(http.StatusOK, cards)
 }
 
+// AddCardToDeck adds a card to a deck, respecting quantity and deck constraints.
 func (h *deckHandler) AddCardToDeck(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 
@@ -157,6 +164,7 @@ func (h *deckHandler) AddCardToDeck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Card added successfully"})
 }
 
+// RemoveCardFromDeck removes a specific quantity of a card from a deck.
 func (h *deckHandler) RemoveCardFromDeck(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 
@@ -209,6 +217,7 @@ func (h *deckHandler) ExportDeckHandler(c *gin.Context) {
 	c.Data(http.StatusOK, "text/plain", []byte(ydkContent))
 }
 
+// ImportDeckHandler imports a .ydk file into an existing deck, adding the cards accordingly.
 func (h *deckHandler) ImportDeckHandler(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 
