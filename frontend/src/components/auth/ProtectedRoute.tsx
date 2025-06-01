@@ -1,37 +1,24 @@
-import { useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
+import { useUser } from '@/contexts/UserContext'
 
-const API_URL = import.meta.env.VITE_API_URL
+// const API_URL = import.meta.env.VITE_API_URL // No longer needed here
 
 interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const { user, loading } = useUser()
   const location = useLocation()
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch(`${API_URL}/auth/me`, {
-          credentials: 'include',
-        })
-        setIsAuthenticated(response.ok)
-      } catch (error) {
-        console.error('Error al verificar la autenticación:', error)
-        setIsAuthenticated(false)
-      }
-    }
+  // useEffect removed
 
-    checkAuth()
-  }, [])
-
-  if (isAuthenticated === null) {
-    return <div>Cargando...</div>
+  if (loading) {
+    // Or a global spinner, or null to render nothing while loading
+    return null
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return <Navigate to="/" state={{ from: location }} replace />
   }
 

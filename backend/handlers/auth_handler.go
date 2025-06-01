@@ -60,9 +60,6 @@ func (h *authHandler) Login(c *gin.Context) {
 	}
 
 	domain := os.Getenv("COOKIE_DOMAIN")
-	if domain == "" {
-		domain = "localhost"
-	}
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "token",

@@ -6,12 +6,15 @@ import { Label } from "@/components/ui/label"
 import { loginSchema, LoginFormValues } from '@/lib/schemas/authSchemas'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useUser } from '@/contexts/UserContext'
 
 const API_URL = import.meta.env.VITE_API_URL
 
 export function LoginForm() {
   const [formError, setFormError] = useState<string>('')
   const navigate = useNavigate()
+  const { setCurrentUser } = useUser()
+
   const {
     register,
     handleSubmit,
@@ -30,12 +33,22 @@ export function LoginForm() {
         credentials: 'include',
         body: JSON.stringify(data),
       })
+
+      const responseData = await response.json()
+
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error('Correo o contraseña incorrectos')
         } else {
-          throw new Error('Error al iniciar sesión. Por favor, inténtalo de nuevo.')
+          throw new Error(responseData.error || 'Error al iniciar sesión. Por favor, inténtalo de nuevo.')
         }
+      }
+
+      if (responseData.user) {
+        setCurrentUser(responseData.user)
+      } else {
+        console.error("User data not found in login response", responseData)
+        throw new Error('Error al procesar la respuesta del servidor.')
       }
 
       navigate('/cards')

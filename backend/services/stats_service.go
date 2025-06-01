@@ -54,7 +54,6 @@ func (s *statsService) CalculateCollectionStats(userID uint) (Stats, error) {
 }
 
 // --- Internal utility functions ---
-
 func convertDeckCardsToGeneric(deckCards []models.DeckCard) []CardWithQuantity {
 	result := make([]CardWithQuantity, 0, len(deckCards))
 	for _, dc := range deckCards {
