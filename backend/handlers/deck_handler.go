@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -23,16 +24,37 @@ type RemoveCardRequest struct {
 	Quantity int `json:"quantity" binding:"required"`
 }
 
-func CreateDeck(c *gin.Context) {
+type DeckHandler interface {
+	CreateDeck(c *gin.Context)
+	GetUserDecks(c *gin.Context)
+	DeleteDeck(c *gin.Context)
+	GetCardByDeck(c *gin.Context)
+	AddCardToDeck(c *gin.Context)
+	RemoveCardFromDeck(c *gin.Context)
+	ExportDeckHandler(c *gin.Context)
+	ImportDeckHandler(c *gin.Context)
+}
+
+type deckHandler struct {
+	deckService services.DeckService
+}
+
+func NewDeckHandler(deckService services.DeckService) DeckHandler {
+	return &deckHandler{
+		deckService: deckService,
+	}
+}
+
+func (h *deckHandler) CreateDeck(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 
 	var req CreateDeckRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"erro": "Invalid request body"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
-	deck, err := services.CreateDeck(userID, req.Name, req.Description)
+	deck, err := h.deckService.CreateDeck(userID, req.Name, req.Description)
 	if err != nil {
 		if errors.Is(err, services.ErrDeckAlreadyExists) || errors.Is(err, services.ErrMaximumNumberOfDecks) {
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
@@ -45,14 +67,14 @@ func CreateDeck(c *gin.Context) {
 	c.JSON(http.StatusCreated, deck)
 }
 
-func GetUserDecks(c *gin.Context) {
+func (h *deckHandler) GetUserDecks(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
 		return
 	}
 
-	decks, err := services.GetDecksByUserID(userID.(uint))
+	decks, err := h.deckService.GetDecksByUserID(userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch decks"})
 		return
@@ -61,7 +83,7 @@ func GetUserDecks(c *gin.Context) {
 	c.JSON(http.StatusOK, decks)
 }
 
-func DeleteDeck(c *gin.Context) {
+func (h *deckHandler) DeleteDeck(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 	deckIDStr := c.Param("deckId")
 
@@ -71,7 +93,7 @@ func DeleteDeck(c *gin.Context) {
 		return
 	}
 
-	err = services.DeleteDeck(uint(deckID), userID)
+	err = h.deckService.DeleteDeck(uint(deckID), userID)
 	if err != nil {
 		if errors.Is(err, services.ErrDeckNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Deck not found"})
@@ -84,7 +106,7 @@ func DeleteDeck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "deck deleted successfully"})
 }
 
-func GetCardByDeck(c *gin.Context) {
+func (h *deckHandler) GetCardByDeck(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 
 	deckIDStr := c.Param("deckId")
@@ -94,7 +116,7 @@ func GetCardByDeck(c *gin.Context) {
 		return
 	}
 
-	cards, err := services.GetCardsByDeck(userID, uint(deckID))
+	cards, err := h.deckService.GetCardsByDeck(userID, uint(deckID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrive deck cards"})
 		return
@@ -103,45 +125,39 @@ func GetCardByDeck(c *gin.Context) {
 	c.JSON(http.StatusOK, cards)
 }
 
-// func AddCardToDeck(c *gin.Context) {
-// 	userID := c.MustGet("user_id").(uint)
+func (h *deckHandler) AddCardToDeck(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
 
-// 	deckIDStr := c.Param("deckId")
-// 	fmt.Println("Param deckId:", c.Param("deckId"))
-// 	fmt.Println("full path:", c.FullPath())
-// 	deckID, err := strconv.ParseUint(deckIDStr, 10, 64)
-// 	if err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid deck ID"})
-// 		return
-// 	}
+	deckIDStr := c.Param("deckId")
+	deckID, err := strconv.ParseUint(deckIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid deck ID"})
+		return
+	}
 
-// 	var req AddCardRequest
-// 	if err := c.ShouldBindJSON(&req); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-// 		return
-// 	}
+	var req AddCardRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
 
-// 	result, err := services.AddCardToDeck(userID, uint(deckID), req.CardID, req.Quantity)
-// 	if err != nil {
-// 		switch {
-// 		case errors.Is(err, services.ErrCardNotFound):
-// 			c.JSON(http.StatusNotFound, gin.H{"error": "Card not found"})
-// 			return
-// 		case errors.Is(err, services.ErrCardCopyLimitExceeded),
-// 			errors.Is(err, services.ErrDeckLimitReached),
-// 			errors.Is(err, services.ErrExtraDeckLimitReached):
-// 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		default:
-// 			log.Println("Error al añadir cartal al deck:", err)
-// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add card to deck"})
-// 		}
-// 		return
-// 	}
+	err = h.deckService.AddCardToDeck(userID, uint(deckID), req.CardID, req.Quantity)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrCardCopyLimitExceeded),
+			errors.Is(err, services.ErrDeckLimitReached),
+			errors.Is(err, services.ErrExtraDeckLimitReached):
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add card to deck"})
+		}
+		return
+	}
 
-// 	c.JSON(http.StatusOK, result)
-// }
+	c.JSON(http.StatusOK, gin.H{"message": "Card added successfully"})
+}
 
-func RemoveCardFromDeck(c *gin.Context) {
+func (h *deckHandler) RemoveCardFromDeck(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 
 	deckIDStr := c.Param("deckId")
@@ -161,7 +177,7 @@ func RemoveCardFromDeck(c *gin.Context) {
 		return
 	}
 
-	err := services.RemoveCardFromDeck(userID, uint(deckID), uint(cardID), req.Quantity)
+	err := h.deckService.RemoveCardFromDeck(userID, uint(deckID), uint(cardID), req.Quantity)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -173,8 +189,9 @@ func RemoveCardFromDeck(c *gin.Context) {
 // Allows you to export a deck in .ydk format for use in clients such as EDOPro.
 // according to their number in the deck. (card_ygo_id) of each card, repeated
 // according to their quantity in the deck.
-func ExportDeckHandler(c *gin.Context) {
+func (h *deckHandler) ExportDeckHandler(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
+
 	deckIDStr := c.Param("deckId")
 	deckID, err := strconv.ParseUint(deckIDStr, 10, 64)
 	if err != nil {
@@ -182,7 +199,7 @@ func ExportDeckHandler(c *gin.Context) {
 		return
 	}
 
-	ydkContent, err := services.ExportDeckAsYDK(userID, uint(deckID))
+	ydkContent, err := h.deckService.ExportDeckAsYDK(userID, uint(deckID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -192,27 +209,27 @@ func ExportDeckHandler(c *gin.Context) {
 	c.Data(http.StatusOK, "text/plain", []byte(ydkContent))
 }
 
-// func ImportDeckHandler(c *gin.Context) {
-// 	userID := c.MustGet("user_id").(uint)
+func (h *deckHandler) ImportDeckHandler(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
 
-// 	deckIDParam := c.Param("deckId")
-// 	deckID, err := strconv.ParseUint(deckIDParam, 10, 64)
-// 	if err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid deck ID"})
-// 		return
-// 	}
+	deckIDStr := c.Param("deckId")
+	deckID, err := strconv.ParseUint(deckIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid deck ID"})
+		return
+	}
 
-// 	file, _, err := c.Request.FormFile("file")
-// 	if err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read file"})
-// 		return
-// 	}
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read file"})
+		return
+	}
 
-// 	err = services.ImportDeckFromYDK(userID, uint(deckID), file)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to import deck: %v", err)})
-// 		return
-// 	}
+	err = h.deckService.ImportDeckFromYDK(userID, uint(deckID), file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to import deck: %v", err)})
+		return
+	}
 
-// 	c.Status(http.StatusNoContent)
-// }
+	c.Status(http.StatusNoContent)
+}
