@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { loginSchema, LoginFormValues } from '@/lib/schemas/authSchemas'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useUser } from '@/contexts/UserContext'
+import { useUser } from '@/hooks/useUser'
 
 const API_URL = import.meta.env.VITE_API_URL
 

@@ -9,7 +9,7 @@ interface DeckViewerProps {
   mainDeck: CardDeck[]
   extraDeck: CardDeck[]
   sideDeck: CardDeck[]
-  onCardClick?: (card: any) => void
+  onCardClick?: (card: CardDeck) => void
 }
 
 const DeckViewer: React.FC<DeckViewerProps> = ({ deck, mainDeck, extraDeck, sideDeck, onCardClick }) => {

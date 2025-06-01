@@ -14,29 +14,27 @@ const API_URL = import.meta.env.VITE_API_URL
 const DeckCard: React.FC<DeckCardProps> = ({ card, onClick }) => {
   const [isCardCollection, setIsCardCollection] = useState<boolean>(false)
 
-  const checkCardCollection = async () => {
-  try {
-    const response = await fetch(`${API_URL}/collections/${card.CardID}`, {
-      method: 'GET',
-      credentials: 'include',
-    })
+  useEffect(() => {
+    const checkCardCollection = async () => {
+      try {
+        const response = await fetch(`${API_URL}/collections/${card.CardID}`, {
+          method: 'GET',
+          credentials: 'include',
+        })
 
-    if (response.status === 200) {
-      setIsCardCollection(true)
-    }else if(response.status === 404){
-      setIsCardCollection(false)
-    }else{
-      throw new Error("Error comprobando")
+        if (response.status === 200) {
+          setIsCardCollection(true)
+        } else if (response.status === 404) {
+          setIsCardCollection(false)
+        } else {
+          throw new Error("Error comprobando")
+        }
+      } catch (error) {
+        console.error('Error comprobando carta en la coleccion:', error)
+      }
     }
-
-  } catch (error) {
-    console.error('Error comprobando carta en la coleccion:', error)
-  }
-}
-
-useEffect(() => {
     checkCardCollection()
-  }, [])
+  }, [card.CardID])
 
   return (
     <div
@@ -52,11 +50,11 @@ useEffect(() => {
         />
       </div>
       {/* Contador de cantidad */}
-        {card.Quantity > 1 && (
-          <div className="absolute top-0 right-0 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-            {card.Quantity}
-          </div>
-        )}
+      {card.Quantity > 1 && (
+        <div className="absolute top-0 right-0 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+          {card.Quantity}
+        </div>
+      )}
     </div>
   )
 }

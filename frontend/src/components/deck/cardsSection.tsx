@@ -15,12 +15,12 @@ interface DeckSectionProps {
 const DeckSection: React.FC<DeckSectionProps> = ({ title, cards, maxCards, onCardClick, isMainDeck }) => {
 
   const cardsLength = () => {
-    var number = 0
+    let number = 0
     cards.forEach(element => {
-    number += element.Quantity
-  });
-    return number    
-}
+      number += element.Quantity
+    })
+    return number
+  }
 
   return (
     <div className="bg-gray-800 rounded-lg p-6 shadow-lg">

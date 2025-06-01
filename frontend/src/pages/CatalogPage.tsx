@@ -7,7 +7,7 @@ import { ResultsGrid } from "@/components/search/resultsGrid"
 import { Sidebar } from "@/components/search/sidebar"
 import Pagination from "@/components/search/resultsPagination"
 import type { FilterOptions, SearchResult } from "@/types/search"
-import { useUser } from '@/contexts/UserContext'
+import { useUser } from '@/hooks/useUser'
 import { toast } from 'sonner'
 import { useDebounce } from 'use-debounce'
 

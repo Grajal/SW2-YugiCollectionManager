@@ -1,6 +1,5 @@
-"use client"
 import { Header } from "@/components/landing/header"
-import { useUser } from '@/contexts/UserContext'
+import { useUser } from '@/hooks/useUser'
 import { useEffect, useState } from "react"
 import { CardDeck, type Deck } from "@/types/deck"
 import { DeckGrid } from "@/components/deck/deckSelector"

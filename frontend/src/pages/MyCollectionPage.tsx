@@ -1,6 +1,6 @@
 import { Header } from "@/components/landing/header"
 import { useState, useEffect } from "react"
-import { useUser } from '@/contexts/UserContext'
+import { useUser } from '@/hooks/useUser'
 import type { Collection } from "@/types/collection"
 import type { Deck } from '@/types/deck'
 import { ManageCardModal } from "@/components/collection/ManageCardModal"
