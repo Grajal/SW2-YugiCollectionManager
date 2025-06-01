@@ -31,6 +31,12 @@ func NewDeckRepository() DeckRepository {
 	}
 }
 
+func NewDeckRepositoryWithDB(db *gorm.DB) DeckRepository {
+	return &deckRepository{
+		db: db,
+	}
+}
+
 // Count decks created by a given user
 func (r *deckRepository) CountByUserID(userID uint) (int64, error) {
 	var count int64
@@ -79,7 +85,11 @@ func (r *deckRepository) FindByIDAndUserID(deckID, userID uint) (*models.Deck, e
 
 // Delete a deck by ID and user ID
 func (r *deckRepository) DeleteByIDAndUserID(deckID, userID uint) error {
-	return r.db.Where("id = ? AND user_id = ?", deckID, userID).Delete(&models.Deck{}).Error
+	result := r.db.Where("id = ? AND user_id = ?", deckID, userID).Delete(&models.Deck{})
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return result.Error
 }
 
 // Get all deck cards for a specific deck

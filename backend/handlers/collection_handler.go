@@ -26,7 +26,6 @@ type CollectionHandler interface {
 	GetCollection(c *gin.Context)
 	GetCollectionCard(c *gin.Context)
 	AddCardToCollection(c *gin.Context)
-	DeleteCardFromCollection(c *gin.Context)
 	DeleteQuantityFromCollection(c *gin.Context)
 }
 
@@ -94,24 +93,6 @@ func (h *collectionHandler) AddCardToCollection(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Card added to collection successfully"})
-}
-
-// DELETE /collection/:cardId
-func (h *collectionHandler) DeleteCardFromCollection(c *gin.Context) {
-	userID := c.MustGet("user_id").(uint)
-	cardIDParam := c.Param("cardId")
-	cardID, err := strconv.ParseUint(cardIDParam, 10, 64)
-	if err != nil || cardID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid card ID"})
-		return
-	}
-
-	if err := h.service.RemoveCardFromCollection(userID, uint(cardID)); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete card from collection"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Card deleted from collection successfully"})
 }
 
 // DELETE /collection/:cardId/quantity

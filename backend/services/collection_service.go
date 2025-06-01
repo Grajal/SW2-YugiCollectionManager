@@ -13,7 +13,6 @@ type CollectionService interface {
 	GetUserCollection(userID uint) ([]models.UserCard, error)
 	GetUserCard(userID, cardID uint) (*models.UserCard, error)
 	AddCardToCollection(userID uint, cardID uint, quantity int) error
-	RemoveCardFromCollection(userID, cardID uint) error
 	DecreaseCardQuantity(userID, cardID uint, quantityToRemove int) error
 }
 
@@ -45,17 +44,6 @@ func (s *collectionService) AddCardToCollection(userID uint, cardID uint, quanti
 	err := s.repo.AddCardToCollection(userID, cardID, quantity)
 	if err != nil {
 		return fmt.Errorf("failed to add card %d to user %d's collection: %w", cardID, userID, err)
-	}
-	return nil
-}
-
-func (s *collectionService) RemoveCardFromCollection(userID, cardID uint) error {
-	err := s.repo.RemoveCardFromCollection(userID, cardID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fmt.Errorf("card %d not found in user %d's collection", cardID, userID)
-		}
-		return fmt.Errorf("failed to remove card %d from user %d's collection: %w", cardID, userID, err)
 	}
 	return nil
 }
