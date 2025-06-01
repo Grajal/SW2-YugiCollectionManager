@@ -218,3 +218,22 @@ func ImportDeckHandler(c *gin.Context) {
 
 	c.Status(http.StatusNoContent)
 }
+
+func GetDeckStats(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
+
+	deckID, err := strconv.Atoi(c.Param("deckId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid deck ID"})
+		return
+	}
+
+	deckCards, err := services.GetCardsByDeck(userID, uint(deckID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch deck cards"})
+		return
+	}
+
+	stats := services.CalculateDeckStats(deckCards)
+	c.JSON(http.StatusOK, stats)
+}

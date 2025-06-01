@@ -1,9 +1,9 @@
 import { Header } from "@/components/landing/header"
 import { useState, useEffect } from "react"
 import { useUser } from '@/contexts/UserContext'
-import type { SearchResult } from "@/types/search"
-import type { Collection } from "@/types/collection"
-import type { Deck } from "@/types/deck"
+import type { Deck, Collection } from "@/types/collection"
+import { ManageCardModal } from "@/components/collection/ManageCardModal"
+import { useCollectionManagement } from "@/hooks/useCollectionManagement"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -16,6 +16,17 @@ export default function MyCollectionPage() {
   const [error, setError] = useState<string | null>(null)
   const [newDeckName, setNewDeckName] = useState<string>("")
 
+  const {
+    isModalOpen,
+    selectedCard,
+    selectedCardQuantity,
+    setIsModalOpen,
+    setSelectedCardQuantity,
+    handleOpenCardModal,
+    handleDeleteCard,
+    handleUpdateCardQuantity,
+  } = useCollectionManagement({ setCollection, setError })
+
   useEffect(() => {
     if (user && user.ID) {
       const fetchData = async () => {
@@ -26,7 +37,7 @@ export default function MyCollectionPage() {
             credentials: 'include',
           })
           if (!collectionResponse.ok) {
-            throw new Error('Failed to fetch collection')
+            throw new Error('Error al cargar la colección')
           }
           const collectionData = await collectionResponse.json()
           setCollection(collectionData.collection || [])
@@ -35,14 +46,14 @@ export default function MyCollectionPage() {
             credentials: 'include',
           })
           if (!decksResponse.ok) {
-            throw new Error('Failed to fetch decks')
+            throw new Error('Error al cargar los mazos')
           }
           const decksData = await decksResponse.json()
           setDecks(decksData)
 
         } catch (err) {
           console.error('Error fetching data:', err)
-          setError(err instanceof Error ? err.message : 'An unknown error occurred')
+          setError(err instanceof Error ? err.message : 'Ocurrió un error desconocido')
           setCollection([])
           setDecks([])
         } finally {
@@ -52,32 +63,22 @@ export default function MyCollectionPage() {
       fetchData()
     } else if (!user) {
       setLoading(false)
-      setError("Please log in to view your collection and decks.")
+      setError("Por favor, inicia sesión para ver tu colección y mazos.")
+      setCollection([])
+      setDecks([])
     }
-  }, [user])
+  }, [user, setError, setCollection])
 
   const handleCreateDeck = async () => {
-    // TODO: Implement handleCreateDeck function
     console.log('TODO: Implement handleCreateDeck function')
   }
 
-  const addCardToDeck = async (card: SearchResult) => {
-    // TODO: Implement addCardToDeck function
-    console.log(card)
-  }
-
   const removeCardFromDeck = async (cardIndex: number) => {
-    // TODO: Implement removeCardFromDeck function
     console.log(cardIndex)
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center justify-center">
-        <Header username={user?.Username || ''} />
-        <p className="text-xl">Loading your collection and decks...</p>
-      </div>
-    )
+    return null
   }
 
   if (error) {
@@ -95,28 +96,31 @@ export default function MyCollectionPage() {
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <Header username={user?.Username || ''} />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-center">My Collection & Decks</h1>
+        <h1 className="text-3xl font-bold mb-8 text-center">Mi Colección y Mazos</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Columna 1: Colección de cartas del usuario */}
           <div className="md:col-span-2 bg-gray-800 p-6 rounded-lg shadow-xl">
-            <h2 className="text-2xl font-semibold mb-6 text-center">My Cards ({collection.length})</h2>
+            <h2 className="text-2xl font-semibold mb-6 text-center">Mis Cartas ({collection.length})</h2>
             {collection.length === 0 ? (
-              <p className="text-center text-gray-400">Your collection is empty. Add cards from the Catalog!</p>
+              <p className="text-center text-gray-400">Tu colección está vacía. ¡Añade cartas desde el Catálogo!</p>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-h-[70vh] overflow-y-auto pr-2">
-                {collection.map((card) => (
-                  <div key={card.ID} className="bg-gray-700 p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer hover:ring-2 hover:ring-purple-500"
-                    onClick={() => addCardToDeck(card.Card)} title={`Add ${card.Card.Name} to deck`}>
-                    <img src={card.Card.ImageURL} alt={card.Card.Name} className="w-full h-auto rounded" />
-                    <h3 className="text-xs font-semibold mt-1 truncate" title={card.Card.Name}>{card.Card.Name}</h3>
+                {collection.map((item) => (
+                  <div key={item.Card.ID} className="relative bg-gray-700 p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer hover:ring-2 hover:ring-purple-500"
+                    onClick={() => handleOpenCardModal(item)} title={`Gestionar ${item.Card.Name}`}>
+                    <img src={item.Card.ImageURL} alt={item.Card.Name} className="w-full h-auto rounded" />
+                    <h3 className="text-xs font-semibold mt-1 truncate" title={item.Card.Name}>{item.Card.Name}</h3>
+                    {item.Quantity > 1 && (
+                      <div className="absolute top-0 right-0 bg-purple-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {item.Quantity}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Columna 2: Gestión de mazos */}
           <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
             <h2 className="text-2xl font-semibold mb-6 text-center">Mis mazos</h2>
             <div className="mb-6">
@@ -166,12 +170,21 @@ export default function MyCollectionPage() {
                     ))}
                   </div>
                 )}
-                {/* Mostrar el total de cartas en el mazo, mazo principal, mazo extra, mazo lateral podría ir aquí */}
               </div>
             )}
           </div>
         </div>
       </div>
+
+      <ManageCardModal
+        isOpen={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        selectedCard={selectedCard}
+        selectedCardQuantity={selectedCardQuantity}
+        setSelectedCardQuantity={setSelectedCardQuantity}
+        handleDeleteCard={handleDeleteCard}
+        handleUpdateCardQuantity={handleUpdateCardQuantity}
+      />
     </div>
   )
-} 
+}

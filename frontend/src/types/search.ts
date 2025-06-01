@@ -1,4 +1,3 @@
-
 interface BaseCardPlaceholder {
   ID: number;
   CardYGOID: number;
@@ -67,5 +66,6 @@ export interface SearchResult {
 export interface FilterOptions {
   tipo: string
   atributo: string
-  estrellas: string
+  level: string
+  frameType: string
 }
