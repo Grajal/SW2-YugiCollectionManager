@@ -22,7 +22,7 @@ export default function CatalogPage() {
   const [filters, setFilters] = useState<FilterOptions>({
     tipo: "",
     atributo: "",
-    estrellas: "",
+    level: "",
     frameType: "",
   })
   const [currentPage, setCurrentPage] = useState<number>(1)
@@ -106,10 +106,20 @@ export default function CatalogPage() {
     const tipoMatches = !filters.tipo || card.Type === filters.tipo
     const frameTypeMatches = !filters.frameType || card.FrameType === filters.frameType
 
+    const levelMatches = (() => {
+      if (!filters.level) return true
+      const targetLevel = parseInt(filters.level, 10)
+      if (isNaN(targetLevel)) return true
+
+      const cardLevel = card.MonsterCard?.Level ?? card.PendulumMonsterCard?.Level
+      return cardLevel === targetLevel
+    })()
+
     return (
       nameMatches &&
       tipoMatches &&
-      frameTypeMatches
+      frameTypeMatches &&
+      levelMatches
     )
   })
 
