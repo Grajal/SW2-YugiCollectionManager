@@ -25,3 +25,9 @@ func SeedTestData(db *gorm.DB, data ...interface{}) {
 		}
 	}
 }
+
+func CleanupDB(db *gorm.DB, models ...interface{}) {
+	for _, m := range models {
+		db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(m)
+	}
+}
