@@ -56,16 +56,6 @@ export const DeckGrid: React.FC<DecksGridProps> = ({ results, onDeckClick }) => 
     window.location.reload()
   }
 
-  if (results.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-400 text-lg">
-          No se encontraron resultados. Intenta con otros términos de búsqueda o filtros.
-        </p>
-      </div>
-    )
-  }
-
   return (
     <div className="container mx-auto px-4 py-8">
         <h1 className="text-sm font-medium text-white">Selecciona el deck</h1>
