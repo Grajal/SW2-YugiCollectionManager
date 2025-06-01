@@ -45,3 +45,6 @@ lerna-debug.log*
 
 # Environment
 .env
+
+#SonarQube
+.scannerwork
