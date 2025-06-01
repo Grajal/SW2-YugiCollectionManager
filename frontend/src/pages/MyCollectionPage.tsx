@@ -2,7 +2,8 @@ import { Header } from "@/components/landing/header"
 import { useState, useEffect } from "react"
 import { useUser } from '@/contexts/UserContext'
 import type { SearchResult } from "@/types/search"
-import type { Deck, Collection } from "@/types/collection"
+import type { Collection } from "@/types/collection"
+import type { Deck } from "@/types/deck"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -158,8 +159,8 @@ export default function MyCollectionPage() {
                 ) : (
                   <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
                     {selectedDeck.DeckCards.map((card, index) => (
-                      <div key={`${card.ID} -${index} `} className="flex items-center justify-between bg-gray-700 p-2 rounded-lg">
-                        <span className="text-sm truncate" title={card.Name}>{card.Name}</span>
+                      <div key={`${card.CardID} -${index} `} className="flex items-center justify-between bg-gray-700 p-2 rounded-lg">
+                        <span className="text-sm truncate" title={card.Card.Name}>{card.Card.Name}</span>
                         <button onClick={() => removeCardFromDeck(index)} className="text-red-400 hover:text-red-300 text-xs">Eliminar</button>
                       </div>
                     ))}
