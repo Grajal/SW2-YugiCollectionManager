@@ -57,7 +57,7 @@ const filterOptionsData = {
     "skill",
   ],
   atributos: ["Luz", "Oscuridad", "Tierra", "Agua", "Fuego", "Viento", "Divino"],
-  estrellas: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+  level: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
 }
 
 interface SearchBarProps {
@@ -94,7 +94,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onFilterChange, filters
     const emptyFilters: FilterOptions = {
       tipo: "",
       atributo: "",
-      estrellas: "",
+      level: "",
       frameType: "",
     }
     setLocalFilters(emptyFilters)
@@ -165,18 +165,18 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onFilterChange, filters
           </select>
         </div>
 
-        {/* Filtro de Estrellas */}
+        {/* Filtro de Nivel (antes Estrellas) */}
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-1">Estrellas</label>
+          <label className="block text-sm font-medium text-gray-400 mb-1">Nivel</label>
           <select
-            value={localFilters.estrellas}
-            onChange={(e) => handleFilterChange("estrellas", e.target.value)}
+            value={localFilters.level}
+            onChange={(e) => handleFilterChange("level" as keyof FilterOptions, e.target.value)}
             className="w-full px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
           >
-            <option value="">Todas</option>
-            {filterOptionsData.estrellas.map((estrellas) => (
-              <option key={estrellas} value={estrellas}>
-                {estrellas}
+            <option value="">Todos</option>
+            {filterOptionsData.level.map((lvl) => (
+              <option key={lvl} value={lvl}>
+                {lvl}
               </option>
             ))}
           </select>

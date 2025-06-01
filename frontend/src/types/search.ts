@@ -66,6 +66,6 @@ export interface SearchResult {
 export interface FilterOptions {
   tipo: string
   atributo: string
-  estrellas: string
+  level: string
   frameType: string
 }
