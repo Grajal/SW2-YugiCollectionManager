@@ -9,8 +9,10 @@ import Pagination from "@/components/search/resultsPagination"
 import type { FilterOptions, SearchResult } from "@/types/search"
 import { useUser } from '@/contexts/UserContext'
 import { toast } from 'sonner'
+import { useDebounce } from 'use-debounce'
 
 const API_URL = import.meta.env.VITE_API_URL
+const DEBOUNCE_DELAY = 500
 
 export default function CatalogPage() {
   const { user } = useUser()
@@ -29,6 +31,8 @@ export default function CatalogPage() {
   const [quantity, setQuantity] = useState<number>(1)
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
+  const [debouncedSearchQuery] = useDebounce(searchQuery, DEBOUNCE_DELAY)
+
   const resultsPerPage = 50
 
   useEffect(() => {
@@ -38,8 +42,8 @@ export default function CatalogPage() {
         let effectiveApiUrl = `${API_URL}/cards/`
 
         const queryParams = new URLSearchParams()
-        if (searchQuery.trim() !== "") {
-          queryParams.append('name', searchQuery)
+        if (debouncedSearchQuery.trim() !== "") {
+          queryParams.append('name', debouncedSearchQuery)
         }
         if (filters.tipo.trim() !== "") {
           queryParams.append('type', filters.tipo)
@@ -93,7 +97,7 @@ export default function CatalogPage() {
     }
 
     fetchData()
-  }, [searchQuery, filters])
+  }, [debouncedSearchQuery, filters])
 
   const filteredResults = cards.filter((card) => {
     const nameMatches =
