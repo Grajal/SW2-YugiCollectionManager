@@ -6,6 +6,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { UserProvider } from '@/contexts/UserContext'
 import MyCollectionPage from '@/pages/MyCollectionPage'
 import Decks from '@/pages/DecksPage'
+import StatisticsPage from './pages/StatisticsPage'
 
 
 export default function App() {
@@ -28,7 +29,8 @@ export default function App() {
           <Route path="/statistics" element={
             <ProtectedRoute>
               <StatisticsPage />
-
+            </ProtectedRoute>
+          } />
           <Route path="/decks" element={
             <ProtectedRoute>
               <Decks />
