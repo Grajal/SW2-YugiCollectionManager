@@ -31,6 +31,12 @@ func NewDeckRepository() DeckRepository {
 	}
 }
 
+func NewDeckRepositoryWithDB(db *gorm.DB) DeckRepository {
+	return &deckRepository{
+		db: db,
+	}
+}
+
 // Count decks created by a given user
 func (r *deckRepository) CountByUserID(userID uint) (int64, error) {
 	var count int64

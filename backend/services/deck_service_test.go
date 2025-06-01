@@ -8,6 +8,7 @@ import (
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/repository"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/utils"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateDeck(t *testing.T) {
@@ -108,4 +109,52 @@ func TestCreateDeck(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_deckService_GetCardsByDeck(t *testing.T) {
+	db := utils.SetupTestDB(&models.User{}, &models.Deck{}, &models.Card{}, &models.LinkMonsterCard{}, &models.MonsterCard{}, &models.PendulumMonsterCard{}, &models.SpellTrapCard{}, &models.DeckCard{})
+
+	// Crear y persistir un usuario
+	user := models.User{Username: "TestUser", Email: "test@example.com", Password: "securepass"}
+	utils.SeedTestData(db, &user)
+
+	// Crear y persistir una carta
+	card := models.Card{Name: "Dark Magician", CardYGOID: 46986414}
+	utils.SeedTestData(db, &card)
+
+	// Crear y persistir un mazo
+	deck := models.Deck{Name: "Test Deck", UserID: user.ID}
+	utils.SeedTestData(db, &deck)
+
+	// Crear y persistir una relación DeckCard
+	deckCard := models.DeckCard{
+		DeckID:   deck.ID,
+		CardID:   card.ID,
+		Quantity: 3,
+		Zone:     "main",
+	}
+	utils.SeedTestData(db, &deckCard)
+
+	repo := repository.NewDeckRepositoryWithDB(db)
+
+	service := &deckService{
+		repo: repo,
+		// no necesitas inyectar cardService ni deckCardService para este test
+	}
+
+	t.Run("returns cards for given deck", func(t *testing.T) {
+		got, err := service.GetCardsByDeck(user.ID, deck.ID)
+
+		assert.NoError(t, err)
+		assert.Len(t, got, 1)
+
+		gotCard := got[0]
+		assert.Equal(t, deck.ID, gotCard.DeckID)
+		assert.Equal(t, card.ID, gotCard.CardID)
+		assert.Equal(t, 3, gotCard.Quantity)
+		assert.Equal(t, "main", gotCard.Zone)
+
+		// Validar preload si el servicio lo incluye (opcional)
+		assert.Equal(t, "Dark Magician", gotCard.Card.Name)
+	})
 }
