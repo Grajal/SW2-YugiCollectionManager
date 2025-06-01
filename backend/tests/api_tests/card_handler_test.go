@@ -15,7 +15,7 @@ import (
 )
 
 func TestGetCardNotInAPI(t *testing.T) {
-	t.Skip("TODO: Fix after merging refactor/backend-structure (#68)")
+	t.Skip("TODO: Fix after merging refactor/backend-structure (#67)")
 	client := api_clients.NewTestClient(true)
 
 	// Use a card name that you know does NOT exist in external API
@@ -79,7 +79,7 @@ func TestGetCardAlreadyInDb(t *testing.T) {
 }
 
 func TestGetCardNotInDb(t *testing.T) {
-	t.Skip("TODO: Fix after merging refactor/backend-structure (#68)")
+	t.Skip("TODO: Fix after merging refactor/backend-structure (#67)")
 	// Initialize the test client with authentication (creates a user and token)
 	client := api_clients.NewTestClient(true)
 
