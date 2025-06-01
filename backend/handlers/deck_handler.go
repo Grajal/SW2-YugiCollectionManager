@@ -148,7 +148,7 @@ func (h *deckHandler) AddCardToDeck(c *gin.Context) {
 		return
 	}
 
-	err = h.deckService.AddCardToDeck(userID, uint(deckID), req.CardID, req.Quantity)
+	err = h.deckService.AddCardToDeck(userID, req.CardID, uint(deckID), req.Quantity)
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrCardCopyLimitExceeded),
