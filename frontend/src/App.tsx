@@ -5,7 +5,9 @@ import { Toaster } from '@/components/ui/toaster'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { UserProvider } from '@/contexts/UserContext'
 import MyCollectionPage from '@/pages/MyCollectionPage'
-import Decks from './pages/DecksPage'
+import Decks from '@/pages/DecksPage'
+import StatisticsPage from './pages/StatisticsPage'
+
 
 export default function App() {
   return (
@@ -21,6 +23,12 @@ export default function App() {
           <Route path="/collection" element={
             <ProtectedRoute>
               <MyCollectionPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/statistics" element={
+            <ProtectedRoute>
+              <StatisticsPage />
             </ProtectedRoute>
           } />
           <Route path="/decks" element={
