@@ -5,6 +5,11 @@ function Hero() {
       <p className="text-xl text-gray-400 max-w-3xl mx-auto">
         "Usuario"
       </p>
+      <img
+        src="https://i.pinimg.com/originals/92/dd/72/92dd72d5cbde702ebaf07d4d2ad0a9f4.gif"
+        className="block mx-auto mt-6"
+      />
+
     </section>
   )
 }

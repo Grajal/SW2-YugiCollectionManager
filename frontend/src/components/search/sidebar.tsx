@@ -1,20 +1,24 @@
 "use client"
 
 import type React from "react"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import type { SearchResult } from "../../types/search"
 import { X } from "lucide-react"
+import { CardDeck } from "@/types/deck"
 
 interface DetailsSidebarProps {
+  type?: string
   card: SearchResult | null
   isOpen: boolean
   onClose: () => void
+  onAction: (quantity?: number) => void
+  onAdd?: (quantity: number) => void
   onAddToCollection: (card: SearchResult) => void
-  quantity: number
   onQuantityChange: (quantity: number) => void
 }
 
-export const Sidebar: React.FC<DetailsSidebarProps> = ({ card, isOpen, onClose, onAddToCollection, quantity, onQuantityChange }) => {
+export const Sidebar: React.FC<DetailsSidebarProps> = ({ type = "search", card, isOpen, onClose, onAction, onAdd, onAddToCollection, onQuantityChange }) => {
+
   // Bloquear el scroll del body cuando el sidebar está abierto
   useEffect(() => {
     if (isOpen) {
@@ -27,6 +31,12 @@ export const Sidebar: React.FC<DetailsSidebarProps> = ({ card, isOpen, onClose, 
       document.body.style.overflow = "auto"
     }
   }, [isOpen])
+
+  const [quantity, setQuantity] = useState(1)
+  const isCardDeck = (card: SearchResult | CardDeck): card is CardDeck => {
+    return (card as CardDeck).Quantity !== undefined
+  }
+
 
   if (!card) return null
 
@@ -97,28 +107,65 @@ export const Sidebar: React.FC<DetailsSidebarProps> = ({ card, isOpen, onClose, 
               <p className="text-white text-sm mt-1">{card.Desc}</p>
             </div>
 
-            {/* Add to Collection Button */}
+            {/*  Button */}
             <div className="mt-6">
-              <div className="mb-4">
-                <label htmlFor="quantity" className="block text-sm font-medium text-gray-400 mb-1">
-                  Cantidad
-                </label>
-                <input
-                  type="number"
-                  id="quantity"
-                  name="quantity"
-                  min="1"
-                  value={quantity}
-                  onChange={(e) => onQuantityChange(parseInt(e.target.value, 10))}
-                  className="w-full px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-              <button
-                onClick={() => onAddToCollection(card)}
-                className="w-full cursor-pointer bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
-              >
-                Añadir a la Colección
-              </button>
+              {type === "search" && (
+                <>
+                  <div className="mb-4">
+                    <label htmlFor="quantity" className="block text-sm font-medium text-gray-400 mb-1">
+                      Cantidad
+                    </label>
+                    <input
+                      type="number"
+                      id="quantity"
+                      defaultValue={1}
+                      name="quantity"
+                      onChange={(e) => onQuantityChange(parseInt(e.target.value, 10))}
+                      className="w-full px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <button
+                    onClick={() => onAddToCollection(card)}
+                    className="w-full cursor-pointer bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
+                  >
+                    Añadir a la Colección
+                  </button>
+                </>
+              )}
+              {type === "deck" && onAdd != undefined && <div>
+                <div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={isCardDeck(card) ? card.Quantity : 1}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <button
+                    onClick={() => onAction(quantity)}
+                    className="w-full cursor-pointer bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={isCardDeck(card) ? 3 - card.Quantity : 1}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <button
+                    onClick={() => onAdd(quantity)}
+                    className="w-full cursor-pointer bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
+                  >
+                    Añadir
+                  </button>
+                </div>
+              </div>}
             </div>
           </div>
         </div>
