@@ -13,7 +13,6 @@ type CollectionRepository interface {
 	GetUserCollection(userID uint) ([]models.UserCard, error)
 	GetUserCard(userID, cardID uint) (*models.UserCard, error)
 	AddCardToCollection(userID uint, cardID uint, quantity int) error
-	RemoveCardFromCollection(userID, cardID uint) error
 	DecreaseCardQuantity(userID, cardID uint, quantityToRemove int) error
 }
 
@@ -24,6 +23,12 @@ type collectionRepository struct {
 func NewCollectionRepository() CollectionRepository {
 	return &collectionRepository{
 		db: database.DB,
+	}
+}
+
+func NewCollectionRepositoryWithDB(db *gorm.DB) CollectionRepository {
+	return &collectionRepository{
+		db: db,
 	}
 }
 
@@ -76,8 +81,12 @@ func (r *collectionRepository) AddCardToCollection(userID uint, cardID uint, qua
 	return err
 }
 
-func (r *collectionRepository) RemoveCardFromCollection(userID, cardID uint) error {
-	return r.db.Where("user_id = ? AND card_id = ?", userID, cardID).Delete(&models.UserCard{}).Error
+func (r *collectionRepository) RemoveCard(userID, cardID uint) error {
+	var userCard models.UserCard
+	if err := r.db.Where("user_id = ? AND card_id = ?", userID, cardID).First(&userCard).Error; err != nil {
+		return fmt.Errorf("user card not found: %w", err)
+	}
+	return r.db.Delete(&userCard).Error
 }
 
 func (r *collectionRepository) DecreaseCardQuantity(userID, cardID uint, quantityToRemove int) error {
