@@ -3,10 +3,13 @@ package services
 import (
 	"errors"
 	"fmt"
+	"mime/multipart"
+	"strconv"
 	"strings"
 
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/repository"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/utils"
 	"gorm.io/gorm"
 )
 
@@ -14,105 +17,86 @@ var ErrDeckAlreadyExists = errors.New("deck with the same name already exists")
 var ErrMaximumNumberOfDecks = errors.New("maximum number of decks reached")
 var ErrDeckNotFound = errors.New("deck not found")
 
-func CreateDeck(userID uint, name, description string) (*models.Deck, error) {
-	var count int64
-	if err := database.DB.Model(&models.Deck{}).Where("user_id = ?", userID).Count(&count).Error; err != nil {
+type DeckService interface {
+	CreateDeck(userID uint, name, description string) (*models.Deck, error)
+	GetDecksByUserID(userID uint) ([]models.Deck, error)
+	DeleteDeck(deckID uint, userID uint) error
+	GetCardsByDeck(userID, deckID uint) ([]models.DeckCard, error)
+	ExportDeckAsYDK(userID, deckID uint) (string, error)
+	ImportDeckFromYDK(userID, deckID uint, file multipart.File) error
+	AddCardToDeck(userID, cardID, deckID uint, quantity int) error
+	RemoveCardFromDeck(userID, deckID, cardID uint, quantity int) error
+}
+
+type deckService struct {
+	repo            repository.DeckRepository
+	cardService     CardService
+	deckCardService DeckCardService
+}
+
+func NewDeckService(repo repository.DeckRepository, cardService CardService, deckCardService DeckCardService) DeckService {
+	return &deckService{repo, cardService, deckCardService}
+}
+
+func (s *deckService) CreateDeck(userID uint, name, description string) (*models.Deck, error) {
+	count, err := s.repo.CountByUserID(userID)
+	if err != nil {
 		return nil, fmt.Errorf("failed to check existing decks: %w", err)
 	}
-
 	if count >= 10 {
 		return nil, ErrMaximumNumberOfDecks
 	}
 
-	var existing models.Deck
-	if err := database.DB.Where("user_id = ? AND name = ?", userID, name).First(&existing).Error; err == nil {
+	exists, err := s.repo.ExistsByName(userID, name)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
 		return nil, ErrDeckAlreadyExists
 	}
 
-	deck := models.Deck{
+	deck := &models.Deck{
 		UserID:      userID,
 		Name:        name,
 		Description: description,
 	}
 
-	if err := database.DB.Create(&deck).Error; err != nil {
+	if err := s.repo.Create(deck); err != nil {
 		return nil, err
 	}
 
-	return &deck, nil
+	return deck, nil
 }
 
-func getDeckByIDAndUserID(deckID, userID uint) (*models.Deck, error) {
-	var deck models.Deck
-	err := database.DB.First(&deck, "id = ? AND user_id = ?", deckID, userID).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrDeckNotFound
-		}
-		return nil, err
-	}
-	return &deck, nil
+func (s *deckService) GetDecksByUserID(userID uint) ([]models.Deck, error) {
+	return s.repo.FindByUserID(userID)
 }
 
-func GetDecksByUserID(userID uint) ([]models.Deck, error) {
-	var decks []models.Deck
-	err := database.DB.Where("user_id = ?", userID).Preload("DeckCards").
-		Preload("DeckCards.Card.MonsterCard").
-		Preload("DeckCards.Card.SpellTrapCard").
-		Preload("DeckCards.Card.LinkMonsterCard").
-		Preload("DeckCards.Card.PendulumMonsterCard").
-		Preload("DeckCards.Card").Find(&decks).Error
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch decks: %w", err)
-	}
-
-	return decks, nil
-}
-
-func DeleteDeck(deckID uint, userID uint) error {
-	var deck models.Deck
-	err := database.DB.Where("id = ? AND user_id = ?", deckID, userID).First(&deck).Error
+func (s *deckService) DeleteDeck(deckID uint, userID uint) error {
+	err := s.repo.DeleteByIDAndUserID(deckID, userID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrDeckNotFound
 	}
-	if err != nil {
-		return err
-	}
-
-	return database.DB.Delete(&deck).Error
+	return err
 }
 
-func GetCardsByDeck(userID, deckID uint) ([]models.DeckCard, error) {
-	var deck models.Deck
-	err := database.DB.Where("id = ? AND user_id = ?", deckID, userID).First(&deck).Error
-	if err != nil {
-		return nil, fmt.Errorf("deck not found or acces denied")
-	}
-
-	var deckCards []models.DeckCard
-	err = database.DB.Where("deck_id = ?", deckID).Preload("Card").Preload("Card.MonsterCard").Preload("Card.SpellTrapCard").Preload("Card.LinkMonsterCard").Preload("Card.PendulumMonsterCard").Find(&deckCards).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	return deckCards, nil
+func (s *deckService) GetCardsByDeck(userID, deckID uint) ([]models.DeckCard, error) {
+	return s.repo.FindDeckCards(deckID, userID)
 }
 
-func ExportDeckAsYDK(userID, deckID uint) (string, error) {
-	deck, err := getDeckByIDAndUserID(deckID, userID)
+func (s *deckService) ExportDeckAsYDK(userID, deckID uint) (string, error) {
+	deck, err := s.repo.FindByIDAndUserID(deckID, userID)
 	if err != nil {
 		return "", fmt.Errorf("deck not found or unauthorized: %w", err)
 	}
 
-	var cards []models.DeckCard
-	err = database.DB.Where("deck_id = ?", deck.ID).Preload("Card").Find(&cards).Error
+	deckCards, err := s.repo.FindDeckCards(deck.ID, userID)
 	if err != nil {
 		return "", fmt.Errorf("failed to load cards: %w", err)
 	}
 
 	var mainLines, extraLines, sideLines []string
-	for _, c := range cards {
+	for _, c := range deckCards {
 		for i := 0; i < c.Quantity; i++ {
 			line := fmt.Sprintf("%d", c.Card.CardYGOID)
 			switch c.Zone {
@@ -131,41 +115,60 @@ func ExportDeckAsYDK(userID, deckID uint) (string, error) {
 	return result, nil
 }
 
-// func ImportDeckFromYDK(userID, deckID uint, file multipart.File) error {
-// 	mainIDs, extraIDs, sideIDs, err := utils.ParseYDK(file)
-// 	if err != nil {
-// 		return fmt.Errorf("error parsing YDK file: %w", err)
-// 	}
+func (s *deckService) ImportDeckFromYDK(userID, deckID uint, file multipart.File) error {
+	mainIDs, extraIDs, sideIDs, err := utils.ParseYDK(file)
+	if err != nil {
+		return fmt.Errorf("error parsing YDK file: %w", err)
+	}
 
-// 	process := func(ids []string) error {
-// 		for _, idStr := range ids {
-// 			id, err := strconv.Atoi(idStr)
-// 			if err != nil {
-// 				return fmt.Errorf("invalid card ID %s: %w", idStr, err)
-// 			}
+	process := func(ids []string) error {
+		for _, idStr := range ids {
+			cardYGOID, err := strconv.Atoi(idStr)
+			if err != nil {
+				return fmt.Errorf("invalid card ID %s: %w", idStr, err)
+			}
 
-// 			card, err := GetOrFetchCardByIDOrName(id, "")
-// 			if err != nil {
-// 				return fmt.Errorf("error resolving card %d: %w", id, err)
-// 			}
+			card, err := s.cardService.GetCardByYGOID(cardYGOID)
+			if err != nil {
+				return fmt.Errorf("error retrieving card %d: %w", cardYGOID, err)
+			}
 
-// 			_, err = AddCardToDeck(userID, deckID, card.ID, 1)
-// 			if err != nil {
-// 				return fmt.Errorf("error adding card %d to deck: %w", card.ID, err)
-// 			}
-// 		}
-// 		return nil
-// 	}
+			if err := s.deckCardService.AddCardToDeck(userID, deckID, card, 1); err != nil {
+				return fmt.Errorf("error adding card %d to deck: %w", card.ID, err)
+			}
+		}
+		return nil
+	}
 
-// 	if err := process(mainIDs); err != nil {
-// 		return fmt.Errorf("error processing main cards: %w", err)
-// 	}
-// 	if err := process(extraIDs); err != nil {
-// 		return fmt.Errorf("error processing extra cards: %w", err)
-// 	}
-// 	if err := process(sideIDs); err != nil {
-// 		return fmt.Errorf("error processing side cards: %w", err)
-// 	}
+	if err := process(mainIDs); err != nil {
+		return fmt.Errorf("error processing main cards: %w", err)
+	}
+	if err := process(extraIDs); err != nil {
+		return fmt.Errorf("error processing extra cards: %w", err)
+	}
+	if err := process(sideIDs); err != nil {
+		return fmt.Errorf("error processing side cards: %w", err)
+	}
 
-// 	return nil
-// }
+	return nil
+}
+
+func (s *deckService) AddCardToDeck(userID, cardID, deckID uint, quantity int) error {
+	// Obtener la carta desde el servicio
+	card, err := s.cardService.GetCardByID(cardID)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve card: %w", err)
+	}
+
+	// Delegar la lógica de validación y persistencia al servicio de deckCard
+	err = s.deckCardService.AddCardToDeck(userID, deckID, card, quantity)
+	if err != nil {
+		return fmt.Errorf("failed to add card to deck: %w", err)
+	}
+
+	return nil
+}
+
+func (s *deckService) RemoveCardFromDeck(userID, deckID, cardID uint, quantity int) error {
+	return s.deckCardService.RemoveCardFromDeck(userID, deckID, cardID, quantity)
+}
