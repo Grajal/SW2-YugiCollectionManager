@@ -45,7 +45,7 @@ export function Header({ username }: { username: string }) {
             Colección
           </a>
 
-          <a href="#" className="text-sm/6 font-semibold text-white">
+          <a href="/statistics" className="text-sm/6 font-semibold text-white">
             Estadísticas
           </a>
           <a href="/cards" className="text-sm/6 font-semibold text-white">
@@ -100,7 +100,7 @@ export function Header({ username }: { username: string }) {
                   Estadísticas
                 </a>
                 <a
-                  href="#"
+                  href="/statistics"
                   className="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-white hover:bg-gray-400"
                 >
                   Decks
