@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, ReactNode, useState } from 'react'
+import { createContext, useEffect, ReactNode, useState, useCallback } from 'react'
 
 interface User {
   ID: number
@@ -6,14 +6,14 @@ interface User {
   Email: string
 }
 
-interface UserContextType {
+export interface UserContextType {
   user: User | null
   loading: boolean
   error: string | null
   setCurrentUser: (userData: User | null) => void
 }
 
-const UserContext = createContext<UserContextType | undefined>(undefined)
+export const UserContext = createContext<UserContextType | undefined>(undefined)
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -22,7 +22,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
+    setLoading(true)
     try {
       const response = await fetch(`${API_URL}/auth/me`, {
         credentials: 'include',
@@ -33,22 +34,22 @@ export function UserProvider({ children }: { children: ReactNode }) {
           setError('Error refreshing user session, using cached data.')
           return
         }
-        throw new Error('No autorizado')
+        setUser(null)
+        setError(response.status === 401 ? 'No autorizado' : 'Error al obtener datos del usuario')
+        return
       }
 
       const userData = await response.json()
       setUser(userData)
       setError(null)
-      setLoading(false)
     } catch (error) {
       console.error('Error al cargar usuario:', error)
-      if (!user) {
-        setUser(null)
-      }
-      setError('Error al cargar usuario')
+      setUser(null)
+      setError('Error de conexión al cargar datos del usuario')
+    } finally {
       setLoading(false)
     }
-  }
+  }, [user, setUser, setError, setLoading])
 
   const setCurrentUser = (userData: User | null) => {
     setUser(userData)
@@ -62,7 +63,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } else {
       setLoading(false)
     }
-  }, [])
+  }, [user, fetchUser])
 
 
   return (
@@ -70,11 +71,5 @@ export function UserProvider({ children }: { children: ReactNode }) {
       {children}
     </UserContext.Provider>
   )
-} export function useUser() {
-  const context = useContext(UserContext)
-  if (context === undefined) {
-    throw new Error('useUser debe ser usado dentro de un UserProvider')
-  }
-  return context
 }
 

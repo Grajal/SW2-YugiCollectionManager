@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import { useUser } from '@/contexts/UserContext'
+import { useUser } from '@/hooks/useUser'
 
 // const API_URL = import.meta.env.VITE_API_URL // No longer needed here
 

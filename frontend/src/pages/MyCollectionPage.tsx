@@ -1,9 +1,11 @@
 import { Header } from "@/components/landing/header"
 import { useState, useEffect } from "react"
-import { useUser } from '@/contexts/UserContext'
-import type { Deck, Collection } from "@/types/collection"
+import { useUser } from '@/hooks/useUser'
+import type { Collection } from "@/types/collection"
+import type { Deck } from '@/types/deck'
 import { ManageCardModal } from "@/components/collection/ManageCardModal"
 import { useCollectionManagement } from "@/hooks/useCollectionManagement"
+import { CardDeck } from '@/types/deck'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -162,9 +164,9 @@ export default function MyCollectionPage() {
                   <p className="text-center text-gray-400">Este mazo está vacío. Haz click en cartas de tu colección para agregarlas.</p>
                 ) : (
                   <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
-                    {selectedDeck.DeckCards.map((card, index) => (
-                      <div key={`${card.ID} -${index} `} className="flex items-center justify-between bg-gray-700 p-2 rounded-lg">
-                        <span className="text-sm truncate" title={card.Name}>{card.Name}</span>
+                    {selectedDeck.DeckCards.map((card: CardDeck, index: number) => (
+                      <div key={`${card.CardID} -${index} `} className="flex items-center justify-between bg-gray-700 p-2 rounded-lg">
+                        <span className="text-sm truncate" title={card.Card.Name}>{card.Card.Name}</span>
                         <button onClick={() => removeCardFromDeck(index)} className="text-red-400 hover:text-red-300 text-xs">Eliminar</button>
                       </div>
                     ))}

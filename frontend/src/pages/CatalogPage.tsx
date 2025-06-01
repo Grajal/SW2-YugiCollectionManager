@@ -7,7 +7,7 @@ import { ResultsGrid } from "@/components/search/resultsGrid"
 import { Sidebar } from "@/components/search/sidebar"
 import Pagination from "@/components/search/resultsPagination"
 import type { FilterOptions, SearchResult } from "@/types/search"
-import { useUser } from '@/contexts/UserContext'
+import { useUser } from '@/hooks/useUser'
 import { toast } from 'sonner'
 import { useDebounce } from 'use-debounce'
 
@@ -224,7 +224,7 @@ export default function CatalogPage() {
         isOpen={isSidebarOpen}
         onClose={closeSidebar}
         onAddToCollection={(card) => handleAddToCollection(card, quantity)}
-        quantity={quantity}
+        onAction={() => { }}
         onQuantityChange={setQuantity}
       />
     </div>
