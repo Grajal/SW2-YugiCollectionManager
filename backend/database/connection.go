@@ -59,21 +59,16 @@ func DBConnect() {
 	log.Fatalf("Failed to connect to database after %d attempts: %v", maxRetries, err)
 }
 
-func Migrate() {
-	err := DB.AutoMigrate(
-		models.User{},
-		models.Card{},
-		models.SpellTrapCard{},
-		models.MonsterCard{},
-		models.LinkMonsterCard{},
-		models.PendulumMonsterCard{},
-		models.UserCard{},
-		models.Deck{},
-		models.DeckCard{},
+func AutoMigrate() error {
+	return DB.AutoMigrate(
+		&models.User{},
+		&models.Card{},
+		&models.SpellTrapCard{},
+		&models.MonsterCard{},
+		&models.LinkMonsterCard{},
+		&models.PendulumMonsterCard{},
+		&models.UserCard{},
+		&models.Deck{},
+		&models.DeckCard{},
 	)
-	if err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
-	}
-
-	log.Println("Database migrated successfully")
 }

@@ -7,8 +7,9 @@ import (
 )
 
 func RegisterCardRoutes(rg *gin.RouterGroup, h handlers.CardHandler) {
+	rg = rg.Group("/cards")
 	rg.Use(middleware.AuthMiddleware())
-	rg.GET("/cards/:param", h.GetCardByParam)
-	rg.GET("/cards", h.GetCards)
-	rg.GET("/cards/search", h.SearchCards)
+	rg.GET("/:param", h.GetCardByParam)
+	rg.GET("/", h.GetCards)
+	rg.GET("/search", h.SearchCards)
 }

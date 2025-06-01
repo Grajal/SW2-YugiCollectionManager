@@ -6,14 +6,15 @@ import (
 	"time"
 
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/handlers"
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/middleware"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/repository"
+	"github.com/Grajal/SW2-YugiCollectionManager/backend/services"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 // SetupRouter configures and returns the main application router
 func SetupRouter() *gin.Engine {
-	r := gin.Default()
+	router := gin.Default()
 
 	allowedOrigins := "http://localhost:5173,https://sw-2-yugi-collection-manager.vercel.app"
 
@@ -27,58 +28,36 @@ func SetupRouter() *gin.Engine {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}
-	r.Use(cors.New(config))
+	router.Use(cors.New(config))
 
-	api := r.Group("/api")
-	{
-		users := api.Group("/users")
-		{
-			users.POST("/", handlers.CreateUser)
-			users.GET("/:username", handlers.GetUserByName)
-			users.DELETE("/:username", handlers.DeleteUser)
-		}
+	userRepo := repository.NewUserRepository()
+	authServices := services.NewAuthService(userRepo)
+	authHandler := handlers.NewAuthHandler(authServices)
 
-		cards := api.Group("/cards")
-		cards.Use(middleware.AuthMiddleware())
-		{
-			// cards.GET("/", handlers.)
-			// cards.GET("/search", handlers.SearchCards)
-			// cards.GET("/:param", handlers.GetOrFetchCard) // Get new card
-		}
-		// auth := api.Group("/auth")
-		// {
-		// 	auth.POST("/login", handlers.Login)
-		// 	auth.POST("/register", handlers.Register)
-		// }
+	cardRepo := repository.NewCardRepository()
+	cardFactory := services.NewCardFactory()
+	cardService := services.NewCardService(cardRepo, cardFactory)
+	cardHandler := handlers.NewCardHandler(cardService)
 
-		// auth = api.Group("/auth")
-		// {
-		// 	auth.Use(middleware.AuthMiddleware())
-		// 	auth.GET("/me", handlers.GetCurrentUser) // Get current user
-		// }
+	deckRepo := repository.NewDeckRepository()
+	deckCardRepo := repository.NewDeckCardRepository()
+	deckCardService := services.NewDeckCardService(deckCardRepo)
+	deckService := services.NewDeckService(deckRepo, cardService, deckCardService)
+	deckHandler := handlers.NewDeckHandler(deckService)
 
-		collections := api.Group("/collections")
-		collections.Use(middleware.AuthMiddleware())
-		{
-			// collections.GET("/", handlers.GetColletion) // Get collection
-			// collections.POST("/", handlers.AddCardToCollection)
-			// collections.DELETE("/:cardId", handlers.DeleteQuantityCardsFromCollcetion)
-			// collections.GET("/stats", handlers.GetCollectionStats)
-		}
+	collectionRepo := repository.NewCollectionRepository()
+	collectionService := services.NewCollectionService(collectionRepo)
+	collectionHandler := handlers.NewCollectionHandler(collectionService)
 
-		decks := api.Group("/decks")
-		decks.Use(middleware.AuthMiddleware())
-		{
-			// decks.GET("/", handlers.GetUserDecks)
-			// decks.POST("/", handlers.CreateDeck)
-			// // decks.POST("/import/:deckId", handlers.ImportDeckHandler)
-			// decks.POST("/export/:deckId", handlers.ExportDeckHandler)
-			// decks.GET("/:deckId/cards", handlers.GetCardByDeck)
-			// // decks.POST("/:deckId/cards", handlers.AddCardToDeck)
-			// decks.DELETE("/:deckId", handlers.DeleteDeck)
-			// decks.DELETE("/:deckId/cards/:cardId", handlers.RemoveCardFromDeck)
-		}
-	}
+	statsService := services.NewStatsService(collectionService, deckService)
+	statsHandler := handlers.NewStatsHandler(statsService, deckService)
 
-	return r
+	api := router.Group("/api")
+	RegisterAuthRoutes(api, authHandler)
+	RegisterCardRoutes(api, cardHandler)
+	RegisterDeckRoutes(api, deckHandler)
+	RegisterStatsRoutes(api, statsHandler)
+	RegisterCollectionRoutes(api, collectionHandler)
+
+	return router
 }
