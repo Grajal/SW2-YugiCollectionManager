@@ -45,17 +45,17 @@ func SetupRouter() *gin.Engine {
 			// cards.GET("/search", handlers.SearchCards)
 			// cards.GET("/:param", handlers.GetOrFetchCard) // Get new card
 		}
-		auth := api.Group("/auth")
-		{
-			auth.POST("/login", handlers.Login)
-			auth.POST("/register", handlers.Register)
-		}
+		// auth := api.Group("/auth")
+		// {
+		// 	auth.POST("/login", handlers.Login)
+		// 	auth.POST("/register", handlers.Register)
+		// }
 
-		auth = api.Group("/auth")
-		{
-			auth.Use(middleware.AuthMiddleware())
-			auth.GET("/me", handlers.GetCurrentUser) // Get current user
-		}
+		// auth = api.Group("/auth")
+		// {
+		// 	auth.Use(middleware.AuthMiddleware())
+		// 	auth.GET("/me", handlers.GetCurrentUser) // Get current user
+		// }
 
 		collections := api.Group("/collections")
 		collections.Use(middleware.AuthMiddleware())
@@ -69,14 +69,14 @@ func SetupRouter() *gin.Engine {
 		decks := api.Group("/decks")
 		decks.Use(middleware.AuthMiddleware())
 		{
-			decks.GET("/", handlers.GetUserDecks)
-			decks.POST("/", handlers.CreateDeck)
-			// decks.POST("/import/:deckId", handlers.ImportDeckHandler)
-			decks.POST("/export/:deckId", handlers.ExportDeckHandler)
-			decks.GET("/:deckId/cards", handlers.GetCardByDeck)
-			// decks.POST("/:deckId/cards", handlers.AddCardToDeck)
-			decks.DELETE("/:deckId", handlers.DeleteDeck)
-			decks.DELETE("/:deckId/cards/:cardId", handlers.RemoveCardFromDeck)
+			// decks.GET("/", handlers.GetUserDecks)
+			// decks.POST("/", handlers.CreateDeck)
+			// // decks.POST("/import/:deckId", handlers.ImportDeckHandler)
+			// decks.POST("/export/:deckId", handlers.ExportDeckHandler)
+			// decks.GET("/:deckId/cards", handlers.GetCardByDeck)
+			// // decks.POST("/:deckId/cards", handlers.AddCardToDeck)
+			// decks.DELETE("/:deckId", handlers.DeleteDeck)
+			// decks.DELETE("/:deckId/cards/:cardId", handlers.RemoveCardFromDeck)
 		}
 	}
 

@@ -38,10 +38,20 @@ func main() {
 		panic("Failed to migrate database: " + err.Error())
 	}
 
+	userRepo := repository.NewUserRepository()
+	authServices := services.NewAuthService(userRepo)
+	authHandler := handlers.NewAuthHandler(authServices)
+
 	cardRepo := repository.NewCardRepository()
 	cardFactory := services.NewCardFactory()
 	cardService := services.NewCardService(cardRepo, cardFactory)
 	cardHandler := handlers.NewCardHandler(cardService)
+
+	deckRepo := repository.NewDeckRepository()
+	deckCardRepo := repository.NewDeckCardRepository()
+	deckCardService := services.NewDeckCardService(deckCardRepo)
+	deckService := services.NewDeckService(deckRepo, cardService, deckCardService)
+	deckHandler := handlers.NewDeckHandler(deckService)
 
 	router := gin.Default()
 	allowedOrigins := "http://localhost:5173,https://sw-2-yugi-collection-manager.vercel.app"
@@ -59,7 +69,9 @@ func main() {
 	router.Use(cors.New(config))
 
 	api := router.Group("/api")
+	routes.RegisterAuthRoutes(api, authHandler)
 	routes.RegisterCardRoutes(api, cardHandler)
+	routes.RegisterDeckRoutes(api, deckHandler)
 
 	if err := router.Run(":" + port); err != nil {
 		panic("Failed to start server: " + err.Error())
