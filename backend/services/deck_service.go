@@ -163,13 +163,11 @@ func (s *deckService) ImportDeckFromYDK(userID, deckID uint, file multipart.File
 
 // AddCardToDeck adds a card to a deck using the CardService and DeckCardService.
 func (s *deckService) AddCardToDeck(userID, cardID, deckID uint, quantity int) error {
-	// Obtener la carta desde el servicio
 	card, err := s.cardService.GetCardByID(cardID)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve card: %w", err)
 	}
 
-	// Delegar la lógica de validación y persistencia al servicio de deckCard
 	err = s.deckCardService.AddCardToDeck(userID, deckID, card, quantity)
 	if err != nil {
 		return fmt.Errorf("failed to add card to deck: %w", err)

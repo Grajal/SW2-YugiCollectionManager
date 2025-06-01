@@ -58,6 +58,7 @@ func (r *deckCardRepository) GetDeckCard(deckID, cardID uint) (*models.DeckCard,
 		Preload("Card.SpellTrapCard").
 		Preload("Card.LinkMonsterCard").
 		Preload("Card.PendulumMonsterCard").
+		Preload("Deck").
 		First(&card).Error
 
 	if err != nil {
