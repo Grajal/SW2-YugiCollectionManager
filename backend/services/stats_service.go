@@ -22,8 +22,8 @@ type CollectionStats struct {
 // CalculateCollectionStats returns overall statistics for a user's card collection,
 // including counts of monsters, spells, and traps, monster attribute distribution,
 // and average ATK/DEF for monster cards.
-func CalculateCollectionStats(userID uint) (CollectionStats, error) {
-	userCards, err := GetCollectionByUserID(userID)
+func CalculateCollectionStats(userID uint, collectionService CollectionService) (CollectionStats, error) {
+	userCards, err := collectionService.GetUserCollection(userID)
 	if err != nil {
 		return CollectionStats{}, err
 	}

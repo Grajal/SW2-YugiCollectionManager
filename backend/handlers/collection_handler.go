@@ -8,25 +8,39 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// AddCardInput defines the structure for the input payload when adding a card to the collection.
-// It requires a CardID and a Quantity, both of which are mandatory fields.
+// AddCardInput defines the structure for adding cards to the collection.
 type AddCardInput struct {
 	CardID   uint `json:"card_id" binding:"required"`
 	Quantity int  `json:"quantity" binding:"required"`
 }
 
+// DeleteCardInput defines the structure for deleting a quantity of cards.
 type DeleteCardInput struct {
 	Quantity int `json:"quantity" binding:"required"`
 }
 
-// GetColletion retrieves the user's card collection.
-// It first checks if the user is authenticated by extracting the user ID from the context.
-// If the user is not authenticated, it returns a 401 Unauthorized response.
-// Otherwise, it fetches the collection using the service layer and returns it as a JSON response.
-func GetColletion(c *gin.Context) {
+// CollectionHandler defines the interface for collection-related HTTP operations.
+type CollectionHandler interface {
+	GetCollection(c *gin.Context)
+	AddCardToCollection(c *gin.Context)
+	DeleteCardFromCollection(c *gin.Context)
+	DeleteQuantityFromCollection(c *gin.Context)
+}
+
+type collectionHandler struct {
+	service services.CollectionService
+}
+
+// Constructor
+func NewCollectionHandler(service services.CollectionService) CollectionHandler {
+	return &collectionHandler{service: service}
+}
+
+// GET /collection
+func (h *collectionHandler) GetCollection(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 
-	collection, err := services.GetCollectionByUserID(userID)
+	collection, err := h.service.GetUserCollection(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve collection"})
 		return
@@ -35,11 +49,8 @@ func GetColletion(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"collection": collection})
 }
 
-// AddCardToCollection adds a card to the user's collection.
-// It validates the input payload to ensure the CardID and Quantity are valid.
-// If the user is not authenticated, it returns a 401 Unauthorized response.
-// If the input is invalid or the service layer fails, appropriate error responses are returned.
-func AddCardToCollection(c *gin.Context) {
+// POST /collection
+func (h *collectionHandler) AddCardToCollection(c *gin.Context) {
 	var input AddCardInput
 	if err := c.ShouldBindJSON(&input); err != nil || input.CardID == 0 || input.Quantity <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
@@ -48,8 +59,7 @@ func AddCardToCollection(c *gin.Context) {
 
 	userID := c.MustGet("user_id").(uint)
 
-	err := services.AddCardToCollection(userID, input.CardID, input.Quantity)
-	if err != nil {
+	if err := h.service.AddCardToCollection(userID, input.CardID, input.Quantity); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add card to collection"})
 		return
 	}
@@ -57,12 +67,9 @@ func AddCardToCollection(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Card added to collection successfully"})
 }
 
-// DeleteCardFromCollection removes a card from the user's collection.
-// It validates the card ID from the URL parameter and ensures the user is authenticated.
-// If the card ID is invalid or the service layer fails, appropriate error responses are returned.
-func DeleteCardFromCollection(c *gin.Context) {
+// DELETE /collection/:card_id
+func (h *collectionHandler) DeleteCardFromCollection(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
-
 	cardIDParam := c.Param("card_id")
 	cardID, err := strconv.ParseUint(cardIDParam, 10, 64)
 	if err != nil || cardID == 0 {
@@ -70,7 +77,7 @@ func DeleteCardFromCollection(c *gin.Context) {
 		return
 	}
 
-	if err := services.DeleteCardFromCollection(userID, uint(cardID)); err != nil {
+	if err := h.service.RemoveCardFromCollection(userID, uint(cardID)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete card from collection"})
 		return
 	}
@@ -78,46 +85,26 @@ func DeleteCardFromCollection(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Card deleted from collection successfully"})
 }
 
-func DeleteQuantityCardsFromCollcetion(c *gin.Context) {
+// DELETE /collection/:cardId/quantity
+func (h *collectionHandler) DeleteQuantityFromCollection(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
-
 	cardIDParam := c.Param("cardId")
 	cardIDUint, err := strconv.ParseUint(cardIDParam, 10, 64)
-	if err != nil {
+	if err != nil || cardIDUint == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid card ID"})
 		return
 	}
 
-	cardID := uint(cardIDUint)
-
 	var input DeleteCardInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+	if err := c.ShouldBindJSON(&input); err != nil || input.Quantity <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid quantity"})
 		return
 	}
 
-	if input.Quantity <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Quantity must be greater than 0"})
+	if err := h.service.DecreaseCardQuantity(userID, uint(cardIDUint), input.Quantity); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update card quantity"})
 		return
 	}
 
-	err = services.DeleteQuantityCardFromCollection(userID, cardID, input.Quantity)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Card quantity updated or removed succesfully"})
-}
-
-func GetCollectionStats(c *gin.Context) {
-	userID := c.MustGet("user_id").(uint)
-
-	stats, err := services.CalculateCollectionStats(userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not calculate stats"})
-		return
-	}
-
-	c.JSON(http.StatusOK, stats)
+	c.JSON(http.StatusOK, gin.H{"message": "Card quantity updated or removed successfully"})
 }
