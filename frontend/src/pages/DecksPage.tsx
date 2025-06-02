@@ -5,7 +5,6 @@ import { CardDeck, type Deck } from "@/types/deck"
 import { DeckGrid } from "@/components/deck/deckSelector"
 import DeckViewer from "@/components/deck/deckViewer"
 import { Sidebar } from "@/components/search/sidebar"
-import UploadYDKDialog from "@/components/ui/import"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -19,7 +18,6 @@ export default function Decks() {
   const [sideDeck, setSideDeck] = useState<CardDeck[]>([])
   const [selectedCard, setSelectedCard] = useState<CardDeck | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false)
-  const [isImportOpen, setIsImportOpen] = useState<boolean>(false)
 
   const fetchDecks = async () => {
     try {
@@ -35,23 +33,6 @@ export default function Decks() {
       console.log(data)
     } catch (error) {
       console.error("ERROR CARGANDO DECKS: " + error)
-    }
-  }
-
-  const importDeck = async (selectedFile: File) => {
-    const formData = new FormData()
-    formData.append("file", selectedFile)
-    try {
-      const response = await fetch(`${API_URL}/decks/import/${selectedDeck?.ID}`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      })
-      if (!response.ok) {
-        throw new Error("Error al cargar los datos")
-      }
-    } catch (error) {
-      console.error(error)
     }
   }
 
@@ -155,37 +136,6 @@ export default function Decks() {
     setIsSidebarOpen(true)
   }
 
-  const handleImportClick = () => {
-    setIsImportOpen(!isImportOpen)
-    console.log(isImportOpen)
-  }
-
-  const exportDeck = async () => {
-    if (!selectedDeck) return
-
-    try {
-      const response = await fetch(`${API_URL}/decks/export/${selectedDeck.ID}`, {
-        method: 'POST',
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        throw new Error('Error exportando el deck')
-      }
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${selectedDeck.Name}.ydk`
-      a.click()
-      window.URL.revokeObjectURL(url)
-    } catch (error) {
-      console.error('Error exportando el deck:', error)
-    }
-  }
-
 
   useEffect(() => {
     if (selectedDeck || selectedCard?.Quantity) {
@@ -199,13 +149,8 @@ export default function Decks() {
     <div className="min-h-screen bg-gray-900 text-gray-100" onLoad={fetchDecks}>
       <Header username={user?.Username || ''} />
       <DeckGrid results={decks} onDeckClick={handleDeckClick}></DeckGrid>
-      {deckEditor && selectedDeck != null && (selectedDeck.DeckCards.length === 0 ? <button onClick={handleImportClick} className="ww-full cursor-pointer bg-white-600 hover:bg-white-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out">Importar</button> : <button onClick={exportDeck} className="ww-full cursor-pointer bg-white-600 hover:bg-white-700 text-white font-bold py-3 px-4 rounded-md transition duration-150 ease-in-out">Exportar</button>)}
       {deckEditor && selectedDeck != null && (<DeckViewer deck={selectedDeck} mainDeck={mainDeck} extraDeck={extraDeck} sideDeck={sideDeck} onCardClick={(card) => { handleCardClick(card) }}></DeckViewer>)}
       {selectedCard != null && (<Sidebar type="deck" card={selectedCard.Card} isOpen={isSidebarOpen} onClose={handleSidebarClose} onAction={(quantity) => { removeCard(quantity) }} onAdd={(quantity) => { addCard(quantity) }} onAddToCollection={() => { }} onQuantityChange={() => { }}></Sidebar>)}
-      {isImportOpen && (<UploadYDKDialog open={isImportOpen}
-        onOpenChange={setIsImportOpen}
-        onFileSelected={(file) => { importDeck(file) }}>
-      </UploadYDKDialog>)}
     </div>
   )
 }
