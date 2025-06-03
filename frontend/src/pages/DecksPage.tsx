@@ -15,7 +15,6 @@ export default function Decks() {
   const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null)
   const [mainDeck, setMainDeck] = useState<CardDeck[]>([])
   const [extraDeck, setExtraDeck] = useState<CardDeck[]>([])
-  const [sideDeck, setSideDeck] = useState<CardDeck[]>([])
   const [selectedCard, setSelectedCard] = useState<CardDeck | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false)
 
@@ -40,7 +39,6 @@ export default function Decks() {
     try {
       const main: CardDeck[] = []
       const extra: CardDeck[] = []
-      const side: CardDeck[] = []
       selectedDeck?.DeckCards.forEach(element => {
         switch (element.Zone) {
           case "main":
@@ -52,13 +50,11 @@ export default function Decks() {
             break
 
           default:
-            side.push(element)
             break
         }
       })
       setMainDeck(main)
       setExtraDeck(extra)
-      setSideDeck(side)
     } catch (error) {
       console.error(error)
     }
