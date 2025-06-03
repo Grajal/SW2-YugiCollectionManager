@@ -98,6 +98,7 @@ func SetupTestDatabase() {
 		models.PendulumMonsterCard{},
 		models.UserCard{},
 		models.Deck{},
+		models.DeckCard{},
 	); err != nil {
 		log.Fatalf("Failed to auto migrate database schema: %v", err)
 	}
