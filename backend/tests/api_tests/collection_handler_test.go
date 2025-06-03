@@ -127,7 +127,8 @@ func TestDeleteQuantityFromCollection_InvalidCardID(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, response.Code)
 
 	var body map[string]string
-	json.Unmarshal(response.Body.Bytes(), &body)
+	err := json.Unmarshal(response.Body.Bytes(), &body)
+	assert.NoError(t, err)
 	assert.Equal(t, "Invalid card ID", body["error"])
 }
 
