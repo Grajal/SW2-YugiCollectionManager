@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -236,7 +236,17 @@ func (h *deckHandler) ImportDeckHandler(c *gin.Context) {
 
 	err = h.deckService.ImportDeckFromYDK(userID, uint(deckID), file)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to import deck: %v", err)})
+		switch {
+		case errors.Is(err, services.ErrCardCopyLimitExceeded):
+			c.JSON(http.StatusConflict, gin.H{"error": "Too many copies of a card in the deck"})
+		case errors.Is(err, services.ErrDeckLimitReached):
+			c.JSON(http.StatusConflict, gin.H{"error": "Main deck exceeds maximum size"})
+		case errors.Is(err, services.ErrExtraDeckLimitReached):
+			c.JSON(http.StatusConflict, gin.H{"error": "Extra deck exceeds maximum size"})
+		default:
+			log.Printf("Unexpected error importing deck ID %d: %v", deckID, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to import deck"})
+		}
 		return
 	}
 
