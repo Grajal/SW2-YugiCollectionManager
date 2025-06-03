@@ -56,7 +56,7 @@ const filterOptionsData = {
     "token",
     "skill",
   ],
-  atributos: ["Luz", "Oscuridad", "Tierra", "Agua", "Fuego", "Viento", "Divino"],
+  atributos: ["LIGHT", "DARK", "EARTH", "WATER", "FIRE", "WIND", "DIVINE"],
   level: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
 }
 

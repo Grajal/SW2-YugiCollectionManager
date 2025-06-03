@@ -10,8 +10,6 @@ import type { FilterOptions, SearchResult } from "@/types/search"
 import { useUser } from '@/hooks/useUser'
 import { toast } from 'sonner'
 import { useDebounce } from 'use-debounce'
-import SelectDeckDialog from "@/components/ui/deckDialog"
-import { Deck } from "@/types/deck"
 
 const API_URL = import.meta.env.VITE_API_URL
 const DEBOUNCE_DELAY = 500
@@ -30,11 +28,11 @@ export default function CatalogPage() {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [selectedCard, setSelectedCard] = useState<SearchResult | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false)
-  const [decks, setDecks] = useState<Deck[]>([])
   const [quantity, setQuantity] = useState<number>(1)
   const [isLoading, setIsLoading] = useState<boolean>(false)
+
   const [debouncedSearchQuery] = useDebounce(searchQuery, DEBOUNCE_DELAY)
-  const [isAddCard, setIsAddCard] = useState<boolean>(false)
+
   const resultsPerPage = 50
 
   useEffect(() => {
@@ -101,27 +99,15 @@ export default function CatalogPage() {
     fetchData()
   }, [debouncedSearchQuery, filters])
 
-  const fetchDecks = async() => {
-    try{
-      const response = await fetch(`${API_URL}/decks/`, {
-        method: 'GET',
-        credentials: 'include',
-      })
-      if (!response.ok) {
-        throw new Error("Error al cargar los datos")
-      }
-      const data = await response.json()
-      setDecks(data)
-    }catch(error){
-      console.error(error)
-    }
-  }
-
   const filteredResults = cards.filter((card) => {
     const nameMatches =
       !searchQuery || card.Name.toLowerCase().includes(searchQuery.toLowerCase())
 
     const tipoMatches = !filters.tipo || card.Type === filters.tipo
+
+    const cardAttribute = card.MonsterCard?.Attribute || card.LinkMonsterCard?.Attribute || card.PendulumMonsterCard?.Attribute
+    const atributoMatches = !filters.atributo || (cardAttribute && cardAttribute.toUpperCase() === filters.atributo.toUpperCase())
+    console.log(cardAttribute, filters.atributo)
     const frameTypeMatches = !filters.frameType || card.FrameType === filters.frameType
 
     const levelMatches = (() => {
@@ -136,6 +122,7 @@ export default function CatalogPage() {
     return (
       nameMatches &&
       tipoMatches &&
+      atributoMatches &&
       frameTypeMatches &&
       levelMatches
     )
@@ -174,32 +161,6 @@ export default function CatalogPage() {
   const closeSidebar = () => {
     setIsSidebarOpen(false)
     setQuantity(1)
-  }
-
-  const handleDeckSelected = async(deckId: number) => {
-    if (selectedCard && quantity > 0) {
-      try {
-        const response = await fetch(`${API_URL}/decks/${deckId}/cards`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            card_id: selectedCard.ID,
-            quantity: quantity,
-          }),
-        })
-
-        const data = await response.json()
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Error adding card')
-        }
-      } catch (error) {
-        console.error('Failed to add card:', error)
-      }
-    }
   }
 
   const handleAddToCollection = async (card: SearchResult, count: number) => {
@@ -262,18 +223,13 @@ export default function CatalogPage() {
           )}
         </div>
       </div>
-      {isAddCard && (<SelectDeckDialog decks={decks} onDeckSelected={handleDeckSelected} onOpenChange={setIsAddCard} open={isAddCard}></SelectDeckDialog>)}
 
       <Sidebar
         card={selectedCard}
         isOpen={isSidebarOpen}
         onClose={closeSidebar}
         onAddToCollection={(card) => handleAddToCollection(card, quantity)}
-        onAction={(quantity) => { if(quantity !== undefined){
-          setQuantity(quantity)
-          fetchDecks()
-          setIsAddCard(true)
-        }}}
+        onAction={() => { }}
         onQuantityChange={setQuantity}
       />
     </div>
