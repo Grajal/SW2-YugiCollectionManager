@@ -51,5 +51,6 @@ This will lift:
 - PostgreSQL (yugi_postgres)
 - Backend (yugi_backend)
 - Frontend (yugi_frontend)
+- SonarQube (yugi_sonarqube)
 
 The backend will be available at http://localhost:8080 and the frontend at http://localhost:5173.
