@@ -1,14 +1,11 @@
 package services
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 
-	"github.com/Grajal/SW2-YugiCollectionManager/backend/database"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/models"
 	"github.com/Grajal/SW2-YugiCollectionManager/backend/repository"
-	"gorm.io/gorm"
 )
 
 var (
@@ -28,6 +25,8 @@ const (
 type DeckCardService interface {
 	AddCardToDeck(userID, deckID uint, card *models.Card, quantity int) error
 	RemoveCardFromDeck(userID, deckID, cardID uint, quantity int) error
+	ValidateDeckCardCount(deckID uint, zone string, newCards int) error
+	ValidateCardCopyLimit(deckID, cardID uint, quantityToAdd int) error
 }
 
 type deckCardService struct {
@@ -46,19 +45,19 @@ func NewDeckCardService(repo repository.DeckCardRepository) DeckCardService {
 func (s *deckCardService) AddCardToDeck(userID, deckID uint, card *models.Card, quantity int) error {
 	if quantity <= 0 {
 		return fmt.Errorf("invalid quantity: must be greater than 0")
+	} else if card == nil {
+		return fmt.Errorf("invalid card: cannot be nil")
 	}
 
 	zone := GetZoneFromCard(card)
 
-	// Validaciones
-	if err := ValidateDeckCardCount(deckID, zone, quantity); err != nil {
+	if err := s.ValidateDeckCardCount(deckID, zone, quantity); err != nil {
 		return fmt.Errorf("deck size validation failed: %w", err)
 	}
-	if err := ValidateCardCopyLimit(deckID, card.ID, quantity); err != nil {
+	if err := s.ValidateCardCopyLimit(deckID, card.ID, quantity); err != nil {
 		return fmt.Errorf("copy limit validation failed: %w", err)
 	}
 
-	// Persistencia
 	if err := s.repo.AddCardToDeck(deckID, card.ID, quantity, zone); err != nil {
 		return fmt.Errorf("failed to add card to deck: %w", err)
 	}
@@ -101,22 +100,15 @@ func GetZoneFromCard(card *models.Card) string {
 
 // ValidateDeckCardCount checks if adding a number of cards to the given zone
 // would exceed the allowed deck size.
-func ValidateDeckCardCount(deckID uint, zone string, newCards int) error {
-	var total sql.NullInt64
-	query := database.DB.Model(&models.DeckCard{}).Where("deck_id = ? AND zone = ?", deckID, zone).Select("SUM(quantity)").Scan(&total)
-	if query.Error != nil {
-		return query.Error
+func (s *deckCardService) ValidateDeckCardCount(deckID uint, zone string, newCards int) error {
+	total, err := s.repo.GetTotalCardsInZone(deckID, zone)
+	if err != nil {
+		return err
 	}
-
-	sum := int64(0)
-	if total.Valid {
-		sum = total.Int64
-	}
-
-	if zone == "extra" && sum+int64(newCards) > 20 {
+	if zone == "extra" && total+newCards > 15 {
 		return ErrExtraDeckLimitReached
 	}
-	if zone == "main" && sum+int64(newCards) > 60 {
+	if zone == "main" && total+newCards > 60 {
 		return ErrDeckLimitReached
 	}
 	return nil
@@ -124,21 +116,13 @@ func ValidateDeckCardCount(deckID uint, zone string, newCards int) error {
 
 // ValidateCardCopyLimit ensures that adding new copies of a card
 // does not exceed the maximum allowed per deck.
-func ValidateCardCopyLimit(deckID, cardID uint, quantityToAdd int) error {
-	var existing models.DeckCard
-	err := database.DB.Where("deck_id = ? AND card_id = ?", deckID, cardID).First(&existing).Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+func (s *deckCardService) ValidateCardCopyLimit(deckID, cardID uint, quantityToAdd int) error {
+	existingQty, err := s.repo.GetCardQuantityInDeck(deckID, cardID)
+	if err != nil {
 		return err
 	}
-
-	existingQty := 0
-	if existing.DeckID != 0 && existing.CardID != 0 {
-		existingQty = existing.Quantity
-	}
-
 	if existingQty+quantityToAdd > 3 {
 		return ErrCardCopyLimitExceeded
 	}
-
 	return nil
 }

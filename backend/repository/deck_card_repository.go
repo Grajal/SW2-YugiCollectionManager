@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -15,6 +16,8 @@ type DeckCardRepository interface {
 	GetDeckCard(deckID, cardID uint) (*models.DeckCard, error)
 	UpdateDeckCardQuantity(card *models.DeckCard) error
 	DeleteDeckCard(card *models.DeckCard) error
+	GetTotalCardsInZone(deckID uint, zone string) (int, error)
+	GetCardQuantityInDeck(deckID, cardID uint) (int, error)
 }
 
 type deckCardRepository struct {
@@ -61,10 +64,38 @@ func (r *deckCardRepository) GetDeckCard(deckID, cardID uint) (*models.DeckCard,
 		Preload("Deck").
 		First(&card).Error
 
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+
 	if err != nil {
 		return nil, err
 	}
 	return &card, nil
+}
+
+func (r *deckCardRepository) GetTotalCardsInZone(deckID uint, zone string) (int, error) {
+	var total sql.NullInt64
+	err := r.db.Model(&models.DeckCard{}).Where("deck_id = ? AND zone = ?", deckID, zone).Select("SUM(quantity)").Scan(&total).Error
+	if err != nil {
+		return 0, err
+	}
+	if total.Valid {
+		return int(total.Int64), nil
+	}
+	return 0, nil
+}
+
+func (r *deckCardRepository) GetCardQuantityInDeck(deckID, cardID uint) (int, error) {
+	var existing models.DeckCard
+	err := r.db.Where("deck_id = ? AND card_id = ?", deckID, cardID).First(&existing).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	return existing.Quantity, nil
 }
 
 // UpdateDeckCardQuantity updates the quantity of an existing DeckCard entry.

@@ -117,7 +117,7 @@ func FetchRandomCards(n int) ([]APICard, error) {
 // It uses the 'fname' query parameter to perform fuzzy name search.
 func FetchCardsByName(name string) ([]APICard, error) {
 	// Usa ambos parámetros como exige la API: num y offset
-	url := fmt.Sprintf("https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=%s&num=10&offset=0", url.QueryEscape(name))
+	url := fmt.Sprintf("https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=%s&num=50&offset=0", url.QueryEscape(name))
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
