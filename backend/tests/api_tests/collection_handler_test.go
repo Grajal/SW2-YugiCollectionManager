@@ -51,7 +51,8 @@ func TestGetCollectionCard_InvalidID(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, response.Code)
 
 	var body map[string]string
-	json.Unmarshal(response.Body.Bytes(), &body)
+	err := json.Unmarshal(response.Body.Bytes(), &body)
+	assert.NoError(t, err)
 	assert.Equal(t, "Invalid card ID", body["error"])
 }
 
@@ -86,7 +87,8 @@ func TestAddCardToCollection_InvalidInput(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, response.Code)
 
 	var body map[string]string
-	json.Unmarshal(response.Body.Bytes(), &body)
+	err := json.Unmarshal(response.Body.Bytes(), &body)
+	assert.NoError(t, err)
 	assert.Equal(t, "Invalid input", body["error"])
 }
 
@@ -109,7 +111,8 @@ func TestDeleteQuantityFromCollection_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.Code)
 
 	var body map[string]string
-	json.Unmarshal(response.Body.Bytes(), &body)
+	err := json.Unmarshal(response.Body.Bytes(), &body)
+	assert.NoError(t, err)
 	assert.Equal(t, "Card quantity updated or removed successfully", body["message"])
 }
 
@@ -139,6 +142,7 @@ func TestDeleteQuantityFromCollection_InvalidQuantity(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, response.Code)
 
 	var body map[string]string
-	json.Unmarshal(response.Body.Bytes(), &body)
+	err := json.Unmarshal(response.Body.Bytes(), &body)
+	assert.NoError(t, err)
 	assert.Equal(t, "Invalid quantity", body["error"])
 }
