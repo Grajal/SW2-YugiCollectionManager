@@ -149,7 +149,7 @@ export default function Decks() {
     <div className="min-h-screen bg-gray-900 text-gray-100" onLoad={fetchDecks}>
       <Header username={user?.Username || ''} />
       <DeckGrid results={decks} onDeckClick={handleDeckClick}></DeckGrid>
-      {deckEditor && selectedDeck != null && (<DeckViewer deck={selectedDeck} mainDeck={mainDeck} extraDeck={extraDeck} sideDeck={sideDeck} onCardClick={(card) => { handleCardClick(card) }}></DeckViewer>)}
+      {deckEditor && selectedDeck != null && (<DeckViewer deck={selectedDeck} mainDeck={mainDeck} extraDeck={extraDeck} onCardClick={(card) => { handleCardClick(card) }}></DeckViewer>)}
       {selectedCard != null && (<Sidebar type="deck" card={selectedCard.Card} isOpen={isSidebarOpen} onClose={handleSidebarClose} onAction={(quantity) => { removeCard(quantity) }} onAdd={(quantity) => { addCard(quantity) }} onAddToCollection={() => { }} onQuantityChange={() => { }}></Sidebar>)}
     </div>
   )

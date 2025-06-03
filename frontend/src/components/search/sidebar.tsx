@@ -130,6 +130,12 @@ export const Sidebar: React.FC<DetailsSidebarProps> = ({ type = "search", card, 
                   >
                     Añadir a la Colección
                   </button>
+                  <button
+                    onClick={() => onAction(quantity)}
+                    className="w-full cursor-pointer bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
+                  >
+                    Añadir a Deck
+                  </button>
                 </>
               )}
               {type === "deck" && onAdd != undefined && <div>

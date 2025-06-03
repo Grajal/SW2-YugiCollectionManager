@@ -10,13 +10,12 @@ interface DeckViewerProps {
   deck: Deck
   mainDeck: CardDeck[]
   extraDeck: CardDeck[]
-  sideDeck: CardDeck[]
   onCardClick?: (card: CardDeck) => void
 }
 
 const API_URL = import.meta.env.VITE_API_URL
 
-const DeckViewer: React.FC<DeckViewerProps> = ({ deck, mainDeck, extraDeck, sideDeck, onCardClick }) => {
+const DeckViewer: React.FC<DeckViewerProps> = ({ deck, mainDeck, extraDeck, onCardClick }) => {
   const [isImportOpen, setIsImportOpen] = useState<boolean>(false)
   const removeDeck = async () => {
       try {
@@ -135,17 +134,6 @@ const DeckViewer: React.FC<DeckViewerProps> = ({ deck, mainDeck, extraDeck, side
               isMainDeck={false}
             />
           </div>
-        </div>
-
-        {/* Side Deck - Nueva sección debajo */}
-        <div className="mt-10">
-          <DeckSection
-            title="Side Deck"
-            cards={sideDeck}
-            maxCards={10}
-            onCardClick={onCardClick}
-            isMainDeck={false}
-          />
         </div>
       </div>
       {isImportOpen && (<UploadYDKDialog open={isImportOpen}
