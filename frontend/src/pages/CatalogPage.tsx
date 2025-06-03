@@ -10,6 +10,8 @@ import type { FilterOptions, SearchResult } from "@/types/search"
 import { useUser } from '@/hooks/useUser'
 import { toast } from 'sonner'
 import { useDebounce } from 'use-debounce'
+import SelectDeckDialog from "@/components/ui/deckDialog"
+import { Deck } from "@/types/deck"
 
 const API_URL = import.meta.env.VITE_API_URL
 const DEBOUNCE_DELAY = 500
@@ -132,6 +134,8 @@ export default function CatalogPage() {
   const indexOfFirstResult = indexOfLastResult - resultsPerPage
   const currentResults: SearchResult[] = filteredResults.slice(indexOfFirstResult, indexOfLastResult)
   const totalPages = Math.ceil(filteredResults.length / resultsPerPage)
+  const [isAddCard, setIsAddCard] = useState<boolean>(false)
+  const [decks, setDecks] = useState<Deck[]>([])
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
@@ -161,6 +165,46 @@ export default function CatalogPage() {
   const closeSidebar = () => {
     setIsSidebarOpen(false)
     setQuantity(1)
+  }
+
+  const fetchDecks = async() => {
+    try{
+      const response = await fetch(`${API_URL}/decks/`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+      if (!response.ok) {
+        throw new Error("Error al cargar los datos")
+      }
+      const data = await response.json()
+      setDecks(data)
+    }catch(error){
+      console.error(error)
+    }
+  }
+
+  const handleDeckSelected = async(deckId: number) => {
+    if (selectedCard && quantity > 0) {
+      try {
+        const response = await fetch(`${API_URL}/decks/${deckId}/cards`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            card_id: selectedCard.ID,
+            quantity: quantity,
+	}),
+        })
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || 'Error adding card')
+        }
+      } catch (error) {
+        console.error('Failed to add card:', error)
+      }
+    }
   }
 
   const handleAddToCollection = async (card: SearchResult, count: number) => {
@@ -223,13 +267,18 @@ export default function CatalogPage() {
           )}
         </div>
       </div>
+      {isAddCard && (<SelectDeckDialog decks={decks} onDeckSelected={handleDeckSelected} onOpenChange={setIsAddCard} open={isAddCard}></SelectDeckDialog>)}
 
       <Sidebar
         card={selectedCard}
         isOpen={isSidebarOpen}
         onClose={closeSidebar}
         onAddToCollection={(card) => handleAddToCollection(card, quantity)}
-        onAction={() => { }}
+        onAction={(quantity) => { if(quantity !== undefined){
+          setQuantity(quantity)
+          fetchDecks()
+          setIsAddCard(true)
+        }}}
         onQuantityChange={setQuantity}
       />
     </div>
